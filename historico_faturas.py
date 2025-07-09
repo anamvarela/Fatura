@@ -2,6 +2,8 @@ import json
 import os
 import streamlit as st
 from pathlib import Path
+from datetime import datetime, timedelta
+import calendar
 
 def get_user_data_file():
     """Retorna o caminho do arquivo de dados do usuário atual"""
@@ -14,12 +16,14 @@ def carregar_dados():
     """Carrega os dados do arquivo JSON do usuário"""
     arquivo = get_user_data_file()
     if not arquivo.exists():
-        return {'faturas': [], 'gastos_fixos': [], 'entradas': []}
+        return {'faturas': [], 'gastos_fixos': [], 'entradas': [], 'parcelas': []}
     
     with open(arquivo) as f:
         dados = json.load(f)
         if 'entradas' not in dados:
             dados['entradas'] = []
+        if 'parcelas' not in dados:
+            dados['parcelas'] = []
         return dados
 
 def salvar_dados(dados):
@@ -29,6 +33,130 @@ def salvar_dados(dados):
     
     with open(arquivo, 'w') as f:
         json.dump(dados, f, indent=4)
+
+def adicionar_parcela(descricao, valor_total, num_parcelas, data_inicio):
+    """Adiciona uma nova compra parcelada"""
+    dados = carregar_dados()
+    if 'parcelas' not in dados:
+        dados['parcelas'] = []
+    
+    # Converter data_inicio para objetos datetime
+    if isinstance(data_inicio, str):
+        data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d')
+    
+    valor_parcela = valor_total / num_parcelas
+    parcelas = []
+    
+    for i in range(num_parcelas):
+        data_parcela = data_inicio + timedelta(days=30 * i)
+        parcelas.append({
+            'numero': i + 1,
+            'valor': valor_parcela,
+            'data': data_parcela.strftime('%Y-%m-%d'),
+            'paga': False
+        })
+    
+    compra_parcelada = {
+        'descricao': descricao,
+        'valor_total': valor_total,
+        'num_parcelas': num_parcelas,
+        'valor_parcela': valor_parcela,
+        'data_inicio': data_inicio.strftime('%Y-%m-%d'),
+        'parcelas': parcelas
+    }
+    
+    dados['parcelas'].append(compra_parcelada)
+    salvar_dados(dados)
+
+def remover_parcela(descricao, valor_total, data_inicio):
+    """Remove uma compra parcelada"""
+    dados = carregar_dados()
+    dados['parcelas'] = [p for p in dados['parcelas'] 
+                        if not (p['descricao'] == descricao and 
+                               abs(float(p['valor_total']) - valor_total) < 0.01 and
+                               p['data_inicio'] == data_inicio)]
+    salvar_dados(dados)
+
+def marcar_parcela_paga(descricao, numero_parcela):
+    """Marca uma parcela específica como paga"""
+    dados = carregar_dados()
+    for compra in dados['parcelas']:
+        if compra['descricao'] == descricao:
+            for parcela in compra['parcelas']:
+                if parcela['numero'] == numero_parcela:
+                    parcela['paga'] = True
+                    break
+    salvar_dados(dados)
+
+def obter_parcelas_mes(mes, ano):
+    """Retorna todas as parcelas de um mês específico"""
+    dados = carregar_dados()
+    parcelas_mes = []
+    
+    data_alvo = datetime(ano, mes, 1)
+    primeiro_dia = data_alvo.replace(day=1)
+    ultimo_dia = data_alvo.replace(day=calendar.monthrange(ano, mes)[1])
+    
+    for compra in dados.get('parcelas', []):
+        for parcela in compra['parcelas']:
+            data_parcela = datetime.strptime(parcela['data'], '%Y-%m-%d')
+            if primeiro_dia <= data_parcela <= ultimo_dia:
+                parcelas_mes.append({
+                    'descricao': compra['descricao'],
+                    'valor_parcela': parcela['valor'],
+                    'numero': parcela['numero'],
+                    'total_parcelas': compra['num_parcelas'],
+                    'paga': parcela.get('paga', False)
+                })
+    
+    return parcelas_mes
+
+def calcular_total_parcelas_futuras(mes_atual=None, ano_atual=None):
+    """Calcula o total de parcelas futuras a partir de um mês específico"""
+    if mes_atual is None:
+        mes_atual = datetime.now().month
+    if ano_atual is None:
+        ano_atual = datetime.now().year
+    
+    dados = carregar_dados()
+    total = 0
+    data_referencia = datetime(ano_atual, mes_atual, 1)
+    
+    for compra in dados.get('parcelas', []):
+        for parcela in compra['parcelas']:
+            data_parcela = datetime.strptime(parcela['data'], '%Y-%m-%d')
+            if data_parcela >= data_referencia and not parcela.get('paga', False):
+                total += parcela['valor']
+    
+    return total
+
+def obter_parcelas_futuras(mes_atual=None, ano_atual=None):
+    """Retorna todas as parcelas futuras organizadas por mês"""
+    if mes_atual is None:
+        mes_atual = datetime.now().month
+    if ano_atual is None:
+        ano_atual = datetime.now().year
+    
+    dados = carregar_dados()
+    parcelas_futuras = {}
+    data_referencia = datetime(ano_atual, mes_atual, 1)
+    
+    for compra in dados.get('parcelas', []):
+        for parcela in compra['parcelas']:
+            data_parcela = datetime.strptime(parcela['data'], '%Y-%m-%d')
+            if data_parcela >= data_referencia and not parcela.get('paga', False):
+                mes_ano = data_parcela.strftime('%Y-%m')
+                if mes_ano not in parcelas_futuras:
+                    parcelas_futuras[mes_ano] = []
+                
+                parcelas_futuras[mes_ano].append({
+                    'descricao': compra['descricao'],
+                    'valor': parcela['valor'],
+                    'numero': parcela['numero'],
+                    'total_parcelas': compra['num_parcelas']
+                })
+    
+    return parcelas_futuras
 
 def adicionar_fatura(fatura):
     """Adiciona uma nova fatura ao histórico"""

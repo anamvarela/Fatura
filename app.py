@@ -12,7 +12,10 @@ from historico_faturas import (
     limpar_historico, limpar_fatura,
     adicionar_gasto_fixo, remover_gasto_fixo,
     obter_gastos_fixos, carregar_dados, salvar_dados,
-    adicionar_entrada, remover_entrada, obter_entradas
+    adicionar_entrada, remover_entrada, obter_entradas,
+    adicionar_parcela, remover_parcela, marcar_parcela_paga,
+    obter_parcelas_mes, calcular_total_parcelas_futuras,
+    obter_parcelas_futuras
 )
 import json
 import yaml
@@ -399,85 +402,79 @@ elif authentication_status:
                 for _, gasto in gastos_categoria.iterrows():
                     st.write(f"- {gasto['descricao']}: R$ {gasto['valor']:.2f}")
 
-    # Aba de Parcelas Futuras
+    # Na aba de Parcelas Futuras
     with tab_parcelas:
-        st.subheader("Análise de Parcelas Futuras")
+        st.header("🔄 Parcelas Futuras")
         
-        # Obter parcelas futuras
-        mes_num = mes_options[mes_selecionado]
-        totais_futuros = calcular_total_parcelas_futuras(mes_num, ano_selecionado)
-        
-        if totais_futuros:
-            # Criar DataFrame para visualização
-            dados_futuros = []
-            for periodo, info in totais_futuros.items():
-                ano, mes = periodo.split('-')
-                mes_nome = list(mes_options.keys())[int(mes)-1]
-                dados_futuros.append({
-                    'Período': f"{mes_nome}/{ano}",
-                    'Total': info['total'],
-                    'Quantidade': len(info['parcelas']),
-                    'periodo_key': periodo  # para ordenação
-                })
+        # Formulário para adicionar nova compra parcelada
+        with st.form("form_parcela"):
+            col1, col2, col3 = st.columns([2, 1, 1])
             
-            df_futuros = pd.DataFrame(dados_futuros)
-            df_futuros = df_futuros.sort_values('periodo_key').drop('periodo_key', axis=1)
+            with col1:
+                descricao_parcela = st.text_input("Descrição da Compra")
             
-            # Mostrar total geral de parcelas futuras
-            total_geral = sum(info['total'] for info in totais_futuros.values())
-            st.metric(
-                "Total em Parcelas Futuras",
-                f"R$ {total_geral:.2f}",
-                help="Soma de todas as parcelas futuras"
+            with col2:
+                valor_total = st.number_input("Valor Total", min_value=0.0, format="%.2f")
+            
+            with col3:
+                num_parcelas = st.number_input("Número de Parcelas", min_value=1, value=1)
+            
+            data_inicio = st.date_input(
+                "Data da Primeira Parcela",
+                value=datetime.now(),
+                min_value=datetime(2020, 1, 1),
+                max_value=datetime(2030, 12, 31)
             )
             
-            # Tabela expansível por mês
-            for periodo, info in sorted(totais_futuros.items()):
-                ano, mes = periodo.split('-')
-                mes_nome = list(mes_options.keys())[int(mes)-1]
-                
-                with st.expander(
-                    f"📅 {mes_nome}/{ano} - R$ {info['total']:.2f} "
-                    f"({len(info['parcelas'])} parcelas)"
-                ):
-                    # Agrupar parcelas por categoria
-                    df_parcelas = pd.DataFrame(info['parcelas'])
-                    resumo_categorias = df_parcelas.groupby('categoria')['valor'].agg(['sum', 'count']).round(2)
-                    resumo_categorias.columns = ['Total (R$)', 'Quantidade']
-                    resumo_categorias = resumo_categorias.sort_values('Total (R$)', ascending=False)
-                    
-                    # Mostrar resumo por categoria
-                    st.markdown("#### Resumo por Categoria")
-                    for categoria, row in resumo_categorias.iterrows():
-                        st.markdown(f"**{categoria}**: R$ {row['Total (R$)']:.2f} ({row['Quantidade']} parcelas)")
-                    
-                    # Mostrar todas as parcelas
-                    st.markdown("#### Detalhamento das Parcelas")
-                    for parcela in sorted(info['parcelas'], key=lambda x: (-x['valor'], x['descricao'])):
-                        st.markdown(
-                            f"- {parcela['descricao']} - {formatar_valor(parcela['valor'])} "
-                            f"(Parcela {parcela['parcela']}/{parcela['total_parcelas']})"
-                        )
+            if st.form_submit_button("Adicionar Compra Parcelada"):
+                if valor_total > 0 and descricao_parcela and num_parcelas > 0:
+                    adicionar_parcela(descricao_parcela, valor_total, num_parcelas, data_inicio)
+                    st.success("✓ Compra parcelada adicionada com sucesso!")
+                else:
+                    st.error("Por favor, preencha todos os campos.")
+        
+        # Mostrar parcelas do mês atual
+        st.subheader(f"Parcelas de {mes_selecionado}/{ano_selecionado}")
+        parcelas_mes = obter_parcelas_mes(mes_num, ano_selecionado)
+        
+        if parcelas_mes:
+            total_mes = sum(p['valor_parcela'] for p in parcelas_mes)
+            st.metric("Total de Parcelas do Mês", f"R$ {total_mes:.2f}")
             
-            # Gráfico de barras dos totais futuros
-            st.subheader("Visualização")
-            fig = go.Figure()
-            fig.add_trace(go.Bar(
-                x=df_futuros['Período'],
-                y=df_futuros['Total'],
-                marker_color='#4B0082'
-            ))
-            
-            fig.update_layout(
-                title='Total de Parcelas por Mês',
-                xaxis_title='Mês',
-                yaxis_title='Valor Total (R$)',
-                height=400
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
+            for parcela in parcelas_mes:
+                col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+                with col1:
+                    st.write(parcela['descricao'])
+                with col2:
+                    st.write(f"R$ {parcela['valor_parcela']:.2f}")
+                with col3:
+                    st.write(f"{parcela['numero']}/{parcela['total_parcelas']}")
+                with col4:
+                    if not parcela['paga']:
+                        if st.button("✓", key=f"pagar_{parcela['descricao']}_{parcela['numero']}"):
+                            marcar_parcela_paga(parcela['descricao'], parcela['numero'])
+                            st.rerun()
+                    else:
+                        st.write("✓ Paga")
         else:
-            st.info("Não há parcelas futuras registradas.") 
+            st.info("Nenhuma parcela para este mês.")
+        
+        # Mostrar parcelas futuras
+        st.subheader("Visão Futura")
+        total_futuro = calcular_total_parcelas_futuras(mes_num, ano_selecionado)
+        st.metric("Total de Parcelas Futuras", f"R$ {total_futuro:.2f}")
+        
+        parcelas_futuras = obter_parcelas_futuras(mes_num, ano_selecionado)
+        if parcelas_futuras:
+            for mes_ano, parcelas in parcelas_futuras.items():
+                ano, mes = mes_ano.split('-')
+                nome_mes = list(mes_options.keys())[int(mes) - 1]
+                
+                with st.expander(f"{nome_mes}/{ano} - Total: R$ {sum(p['valor'] for p in parcelas):.2f}"):
+                    for parcela in parcelas:
+                        st.write(f"• {parcela['descricao']}: R$ {parcela['valor']:.2f} ({parcela['numero']}/{parcela['total_parcelas']})")
+        else:
+            st.info("Nenhuma parcela futura encontrada.")
 
     # Aba de Gastos Fixos
     with tab_fixos:
