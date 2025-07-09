@@ -1,14 +1,14 @@
+cookie:
+  expiry_days: 30
+  key: some_signature_key
+  name: fatura_auth
 credentials:
   usernames:
     anavarela:
       email: anabarrosvarela@gmail.com
       name: Ana Maria Barros Varela
-      password: $2b$12$example_hash  # Será substituído quando você rodar o script novamente
+      password: $2b$12$onZB8UzDQ2tVdmhxlTzf8OVJ5nlmRqpOhycBTmDa759iB7ZkVPYWW
     juliaabreu:
       email: juliaabreu2002@gmail.com
       name: Julia Abreu
-      password: $2b$12$example_hash  # Será substituído quando você rodar o script novamente
-cookie:
-  expiry_days: 30
-  key: some_signature_key
-  name: fatura_auth 
+      password: $2b$12$ARc8dm/36EpfCHfZW2WY2unCbcwI5iZka6ZkShCc/uvHVmkdZ6P0C
