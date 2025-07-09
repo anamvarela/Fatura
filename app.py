@@ -374,52 +374,80 @@ elif authentication_status:
         
         # Preparar dados para análise
         df = pd.DataFrame(fatura_atual['transacoes'])
-        
-        # Mostrar tabela de gastos por categoria
-        st.write("### Detalhamento por Categoria")
-        for idx, transacao in df.iterrows():
-            with st.expander(f"{transacao['descricao']}: {formatar_valor(transacao['valor'])}"):
-                with st.form(f"form_transacao_{idx}"):
-                    col1, col2, col3 = st.columns([2, 1, 1])
-                    
-                    with col1:
-                        nova_categoria = st.selectbox(
-                            "Categoria",
-                            options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"],
-                            key=f"cat_{idx}",
-                            index=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"].index(transacao.get('categoria', 'Outros'))
-                        )
-                    
-                    with col2:
-                        is_fixo = st.checkbox("Gasto Fixo", key=f"fix_{idx}")
-                    
-                    with col3:
-                        if st.form_submit_button("💾 Salvar"):
-                            # Atualizar categoria
-                            fatura_atual['transacoes'][idx]['categoria'] = nova_categoria
-                            
-                            # Se marcado como fixo, adicionar aos gastos fixos
-                            if is_fixo:
-                                gasto_fixo = {
-                                    'descricao': transacao['descricao'],
-                                    'valor': transacao['valor'],
-                                    'categoria': nova_categoria,
-                                    'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                }
-                                adicionar_gasto_fixo(gasto_fixo)
-                            
-                            # Salvar alterações
-                            for i, f in enumerate(dados['faturas']):
-                                if f['mes'] == mes_num and f['ano'] == ano_selecionado:
-                                    dados['faturas'][i] = fatura_atual
-                                    break
-                            salvar_dados(dados)
-                            st.success("✓ Alterações salvas!")
-                            st.rerun()
+        df['categoria'] = df['descricao'].apply(classificar_transacao)
         
         # Calcular totais por categoria
-        df['categoria'] = df['descricao'].apply(classificar_transacao)
         totais_categoria = df.groupby('categoria')['valor'].sum().sort_values(ascending=False)
+        
+        # Mostrar detalhamento por categoria
+        st.write("### Detalhamento por Categoria")
+        for categoria, total in totais_categoria.items():
+            with st.expander(f"📁 {categoria} - {formatar_valor(total)} ({(total/totais_categoria.sum()*100):.1f}%) - {len(df[df['categoria'] == categoria])} transações"):
+                gastos_categoria = df[df['categoria'] == categoria].sort_values('valor', ascending=False)
+                for idx, transacao in gastos_categoria.iterrows():
+                    col1, col2, col3, col4 = st.columns([1, 3, 2, 1])
+                    
+                    with col1:
+                        st.write(transacao['data'])
+                    
+                    with col2:
+                        st.write(transacao['descricao'])
+                    
+                    with col3:
+                        st.write(formatar_valor(transacao['valor']))
+                    
+                    with col4:
+                        if st.button("✏️", key=f"edit_{idx}"):
+                            st.session_state[f'editing_{idx}'] = True
+                    
+                    # Se o botão de edição foi clicado, mostrar o formulário
+                    if st.session_state.get(f'editing_{idx}', False):
+                        with st.form(f"form_transacao_{idx}"):
+                            nova_categoria = st.selectbox(
+                                "Categoria",
+                                options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"],
+                                key=f"cat_{idx}",
+                                index=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"].index(transacao['categoria'])
+                            )
+                            
+                            is_fixo = st.checkbox("Marcar como gasto fixo", key=f"fix_{idx}")
+                            
+                            col1, col2 = st.columns([1, 1])
+                            with col1:
+                                if st.form_submit_button("💾 Salvar"):
+                                    # Atualizar categoria
+                                    fatura_atual['transacoes'][idx]['categoria'] = nova_categoria
+                                    
+                                    # Se marcado como fixo, adicionar aos gastos fixos
+                                    if is_fixo:
+                                        gasto_fixo = {
+                                            'descricao': transacao['descricao'],
+                                            'valor': transacao['valor'],
+                                            'categoria': nova_categoria,
+                                            'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                        }
+                                        adicionar_gasto_fixo(gasto_fixo)
+                                    
+                                    # Salvar alterações
+                                    for i, f in enumerate(dados['faturas']):
+                                        if f['mes'] == mes_num and f['ano'] == ano_selecionado:
+                                            dados['faturas'][i] = fatura_atual
+                                            break
+                                    salvar_dados(dados)
+                                    st.session_state[f'editing_{idx}'] = False
+                                    st.success("✓ Alterações salvas!")
+                                    st.rerun()
+                            
+                            with col2:
+                                if st.form_submit_button("❌ Cancelar"):
+                                    st.session_state[f'editing_{idx}'] = False
+                                    st.rerun()
+                    
+                    # Mostrar ícone de fixo se for um gasto fixo
+                    if transacao['descricao'] in [g['descricao'] for g in dados.get('gastos_fixos', [])]:
+                        st.write("📌 Gasto Fixo")
+                    
+                    st.divider()
         
         # Criar gráfico de barras
         fig_barras = go.Figure(data=[
@@ -440,17 +468,6 @@ elif authentication_status:
         
         # Mostrar gráfico
         st.plotly_chart(fig_barras, use_container_width=True)
-        
-        # Mostrar totais
-        st.write("### Totais por Categoria")
-        for categoria, total in totais_categoria.items():
-            st.write(f"**{categoria}**: {formatar_valor(total)}")
-            gastos_categoria = df[df['categoria'] == categoria].sort_values('valor', ascending=False)
-            for _, gasto in gastos_categoria.iterrows():
-                if gasto['descricao'] in [g['descricao'] for g in dados.get('gastos_fixos', [])]:
-                    st.write(f"- 📌 {gasto['descricao']}: {formatar_valor(gasto['valor'])}")
-                else:
-                    st.write(f"- {gasto['descricao']}: {formatar_valor(gasto['valor'])}")
 
     # Na aba de Parcelas Futuras
     with tab_parcelas:
