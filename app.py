@@ -238,7 +238,7 @@ elif authentication_status:
     # Função auxiliar para formatar valores
     def formatar_valor(valor):
         """Formata valor monetário com pontos e vírgulas"""
-        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return f"R$ {valor:,.2f}"
 
     def adicionar_gasto_fixo_novo(transacao):
         """Adiciona um novo gasto fixo"""
@@ -375,36 +375,82 @@ elif authentication_status:
         # Preparar dados para análise
         df = pd.DataFrame(fatura_atual['transacoes'])
         
-        # Adicionar coluna de categoria
-        df['categoria'] = df['descricao'].apply(classificar_transacao)
+        # Mostrar tabela de gastos por categoria
+        st.write("### Detalhamento por Categoria")
+        for idx, transacao in df.iterrows():
+            with st.expander(f"{transacao['descricao']}: {formatar_valor(transacao['valor'])}"):
+                with st.form(f"form_transacao_{idx}"):
+                    col1, col2, col3 = st.columns([2, 1, 1])
+                    
+                    with col1:
+                        nova_categoria = st.selectbox(
+                            "Categoria",
+                            options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"],
+                            key=f"cat_{idx}",
+                            index=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"].index(transacao.get('categoria', 'Outros'))
+                        )
+                    
+                    with col2:
+                        is_fixo = st.checkbox("Gasto Fixo", key=f"fix_{idx}")
+                    
+                    with col3:
+                        if st.form_submit_button("💾 Salvar"):
+                            # Atualizar categoria
+                            fatura_atual['transacoes'][idx]['categoria'] = nova_categoria
+                            
+                            # Se marcado como fixo, adicionar aos gastos fixos
+                            if is_fixo:
+                                gasto_fixo = {
+                                    'descricao': transacao['descricao'],
+                                    'valor': transacao['valor'],
+                                    'categoria': nova_categoria,
+                                    'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                }
+                                adicionar_gasto_fixo(gasto_fixo)
+                            
+                            # Salvar alterações
+                            for i, f in enumerate(dados['faturas']):
+                                if f['mes'] == mes_num and f['ano'] == ano_selecionado:
+                                    dados['faturas'][i] = fatura_atual
+                                    break
+                            salvar_dados(dados)
+                            st.success("✓ Alterações salvas!")
+                            st.rerun()
         
         # Calcular totais por categoria
+        df['categoria'] = df['descricao'].apply(classificar_transacao)
         totais_categoria = df.groupby('categoria')['valor'].sum().sort_values(ascending=False)
         
-        # Criar gráfico de pizza
-        fig_pizza = go.Figure(data=[go.Pie(
-            labels=totais_categoria.index,
-            values=totais_categoria.values,
-            hole=.3
-        )])
+        # Criar gráfico de barras
+        fig_barras = go.Figure(data=[
+            go.Bar(
+                x=totais_categoria.index,
+                y=totais_categoria.values,
+                marker_color='#4B0082'
+            )
+        ])
         
         # Configurar layout
-        fig_pizza.update_layout(
+        fig_barras.update_layout(
             title="Distribuição de Gastos por Categoria",
-            showlegend=True,
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            xaxis_title="Categoria",
+            yaxis_title="Valor Total (R$)",
+            showlegend=False
         )
         
         # Mostrar gráfico
-        st.plotly_chart(fig_pizza, use_container_width=True)
+        st.plotly_chart(fig_barras, use_container_width=True)
         
-        # Mostrar tabela de gastos por categoria
-        st.write("### Detalhamento por Categoria")
-        for categoria in totais_categoria.index:
-            with st.expander(f"{categoria}: R$ {totais_categoria[categoria]:.2f}"):
-                gastos_categoria = df[df['categoria'] == categoria].sort_values('valor', ascending=False)
-                for _, gasto in gastos_categoria.iterrows():
-                    st.write(f"- {gasto['descricao']}: R$ {gasto['valor']:.2f}")
+        # Mostrar totais
+        st.write("### Totais por Categoria")
+        for categoria, total in totais_categoria.items():
+            st.write(f"**{categoria}**: {formatar_valor(total)}")
+            gastos_categoria = df[df['categoria'] == categoria].sort_values('valor', ascending=False)
+            for _, gasto in gastos_categoria.iterrows():
+                if gasto['descricao'] in [g['descricao'] for g in dados.get('gastos_fixos', [])]:
+                    st.write(f"- 📌 {gasto['descricao']}: {formatar_valor(gasto['valor'])}")
+                else:
+                    st.write(f"- {gasto['descricao']}: {formatar_valor(gasto['valor'])}")
 
     # Na aba de Parcelas Futuras
     with tab_parcelas:
