@@ -24,6 +24,7 @@ import yaml
 from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 from pathlib import Path
+import time
 
 # Configuração da página
 st.set_page_config(
@@ -360,11 +361,12 @@ elif authentication_status:
         # Carregar dados do histórico
         dados = carregar_dados()
         faturas = dados.get('faturas', [])
+        gastos_fixos = dados.get('gastos_fixos', [])
         
         # Filtrar fatura do mês atual
         fatura_atual = None
         for fatura in faturas:
-            if fatura['mes'] == mes_num and fatura['ano'] == ano_selecionado:
+            if fatura['mes'] == mes_num and f['ano'] == ano_selecionado:
                 fatura_atual = fatura
                 break
         
@@ -384,70 +386,87 @@ elif authentication_status:
         for categoria, total in totais_categoria.items():
             with st.expander(f"📁 {categoria} - {formatar_valor(total)} ({(total/totais_categoria.sum()*100):.1f}%) - {len(df[df['categoria'] == categoria])} transações"):
                 gastos_categoria = df[df['categoria'] == categoria].sort_values('valor', ascending=False)
-                for idx, transacao in gastos_categoria.iterrows():
-                    col1, col2, col3, col4 = st.columns([1, 3, 2, 1])
-                    
-                    with col1:
-                        st.write(transacao['data'])
-                    
-                    with col2:
-                        st.write(transacao['descricao'])
-                    
-                    with col3:
-                        st.write(formatar_valor(transacao['valor']))
-                    
-                    with col4:
-                        if st.button("✏️", key=f"edit_{idx}"):
-                            st.session_state[f'editing_{idx}'] = True
-                    
-                    # Se o botão de edição foi clicado, mostrar o formulário
-                    if st.session_state.get(f'editing_{idx}', False):
-                        with st.form(f"form_transacao_{idx}"):
-                            nova_categoria = st.selectbox(
-                                "Categoria",
-                                options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"],
-                                key=f"cat_{idx}",
-                                index=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"].index(transacao['categoria'])
-                            )
-                            
-                            is_fixo = st.checkbox("Marcar como gasto fixo", key=f"fix_{idx}")
-                            
-                            col1, col2 = st.columns([1, 1])
-                            with col1:
-                                if st.form_submit_button("💾 Salvar"):
-                                    # Atualizar categoria
-                                    fatura_atual['transacoes'][idx]['categoria'] = nova_categoria
-                                    
-                                    # Se marcado como fixo, adicionar aos gastos fixos
-                                    if is_fixo:
-                                        gasto_fixo = {
-                                            'descricao': transacao['descricao'],
-                                            'valor': transacao['valor'],
-                                            'categoria': nova_categoria,
-                                            'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                        }
-                                        adicionar_gasto_fixo(gasto_fixo)
-                                    
-                                    # Salvar alterações
-                                    for i, f in enumerate(dados['faturas']):
-                                        if f['mes'] == mes_num and f['ano'] == ano_selecionado:
-                                            dados['faturas'][i] = fatura_atual
-                                            break
-                                    salvar_dados(dados)
-                                    st.session_state[f'editing_{idx}'] = False
-                                    st.success("✓ Alterações salvas!")
-                                    st.rerun()
-                            
-                            with col2:
-                                if st.form_submit_button("❌ Cancelar"):
-                                    st.session_state[f'editing_{idx}'] = False
-                                    st.rerun()
-                    
-                    # Mostrar ícone de fixo se for um gasto fixo
-                    if transacao['descricao'] in [g['descricao'] for g in dados.get('gastos_fixos', [])]:
-                        st.write("📌 Gasto Fixo")
-                    
-                    st.divider()
+                
+                # Criar container para reduzir espaçamento
+                with st.container():
+                    for idx, transacao in gastos_categoria.iterrows():
+                        # Verificar se é gasto fixo
+                        is_gasto_fixo = any(
+                            g['descricao'] == transacao['descricao'] and 
+                            g['valor'] == transacao['valor'] 
+                            for g in gastos_fixos
+                        )
+                        
+                        # Layout mais compacto
+                        cols = st.columns([1, 3, 2, 0.5, 0.5])
+                        
+                        with cols[0]:
+                            st.write(transacao['data'])
+                        
+                        with cols[1]:
+                            st.write(transacao['descricao'])
+                        
+                        with cols[2]:
+                            st.write(formatar_valor(transacao['valor']))
+                        
+                        with cols[3]:
+                            if is_gasto_fixo:
+                                st.write("📌")
+                        
+                        with cols[4]:
+                            if st.button("✏️", key=f"edit_{idx}"):
+                                st.session_state[f'editing_{idx}'] = True
+                        
+                        # Se o botão de edição foi clicado, mostrar o formulário
+                        if st.session_state.get(f'editing_{idx}', False):
+                            with st.form(f"form_transacao_{idx}"):
+                                nova_categoria = st.selectbox(
+                                    "Categoria",
+                                    options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"],
+                                    key=f"cat_{idx}",
+                                    index=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"].index(transacao['categoria'])
+                                )
+                                
+                                is_fixo = st.checkbox("Marcar como gasto fixo", key=f"fix_{idx}", value=is_gasto_fixo)
+                                
+                                col1, col2 = st.columns([1, 1])
+                                with col1:
+                                    if st.form_submit_button("💾 Salvar"):
+                                        # Atualizar categoria
+                                        fatura_atual['transacoes'][idx]['categoria'] = nova_categoria
+                                        
+                                        # Se marcado como fixo, adicionar aos gastos fixos
+                                        if is_fixo and not is_gasto_fixo:
+                                            gasto_fixo = {
+                                                'descricao': transacao['descricao'],
+                                                'valor': transacao['valor'],
+                                                'categoria': nova_categoria,
+                                                'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                            }
+                                            adicionar_gasto_fixo(gasto_fixo)
+                                        
+                                        # Se desmarcado como fixo, remover dos gastos fixos
+                                        elif not is_fixo and is_gasto_fixo:
+                                            remover_gasto_fixo(transacao['descricao'], transacao['valor'])
+                                        
+                                        # Salvar alterações
+                                        for i, f in enumerate(dados['faturas']):
+                                            if f['mes'] == mes_num and f['ano'] == ano_selecionado:
+                                                dados['faturas'][i] = fatura_atual
+                                                break
+                                        salvar_dados(dados)
+                                        st.session_state[f'editing_{idx}'] = False
+                                        st.success("✓ Alterações salvas com sucesso!")
+                                        time.sleep(0.5)  # Pequena pausa para mostrar a mensagem
+                                        st.rerun()
+                                
+                                with col2:
+                                    if st.form_submit_button("❌ Cancelar"):
+                                        st.session_state[f'editing_{idx}'] = False
+                                        st.rerun()
+                        
+                        # Linha mais fina para separar transações
+                        st.markdown("---")
         
         # Criar gráfico de barras
         fig_barras = go.Figure(data=[
