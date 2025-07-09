@@ -4,7 +4,7 @@ import pdfplumber
 import plotly.express as px
 import plotly.graph_objects as go
 import re
-from datetime import datetime
+from datetime import datetime, date
 import calendar
 from historico_faturas import (
     adicionar_fatura, obter_fatura_anterior,
@@ -26,6 +26,7 @@ import streamlit_authenticator as stauth
 from pathlib import Path
 import time
 import os
+from dateutil.relativedelta import relativedelta
 
 def carregar_faturas():
     if os.path.exists('faturas.json'):
@@ -191,43 +192,45 @@ elif authentication_status:
     # Função para classificar transações
     @st.cache_data
     def classificar_transacao(descricao):
-        """Classifica a transação em categorias"""
         descricao = descricao.lower()
-        categorias = {
-            'Alimentação': [
-                'restaurante', 'ifood', 'food', 'mercado', 'supermercado', 'padaria',
-                'confeitaria', 'bar', 'galeto', 'absurda', 'katzsu',
-                'garota do', 'abbraccio', 'leblon resta', 'rainha',
-                'zona sul', 'tabacaria', 'cafeteria', 'casa do alemao',
-                'ferro e farinha', 'eleninha', 'buddario'
-            ],
-            'Transporte': [
-                'uber', '99', 'taxi', 'combustivel', 'estacionamento', 'pedágio',
-                'metro', 'brt', 'van', 'onibus', 'mobilidade', 'posto', 'gasolina'
-            ],
-            'Entretenimento': [
-                'cinema', 'teatro', 'show', 'netflix', 'spotify', 'prime',
-                'ingresso', 'livraria', 'livros', 'jogos', 'game', 'steam',
-                'playstation', 'xbox', 'nintendo', 'hbo', 'disney'
-            ],
-            'Self Care': [
-                'academia', 'farmacia', 'drogaria', 'pacheco', 'salao',
-                'cabelereiro', 'spa', 'massagem', 'medico', 'dentista',
-                'terapia', 'psicolog', 'nutri', 'personal', 'pilates',
-                'yoga', 'crossfit'
-            ],
-            'Compras': [
-                'amazon', 'americanas', 'magalu', 'mercado livre', 'shopee',
-                'aliexpress', 'shein', 'renner', 'riachuelo', 'cea', 'zara',
-                'nike', 'adidas', 'puma', 'centauro', 'decathlon', 'dafiti',
-                'netshoes', 'natura', 'avon', 'boticario', 'sephora'
-            ]
-        }
         
-        for categoria, palavras_chave in categorias.items():
-            if any(palavra in descricao for palavra in palavras_chave):
-                return categoria
-        return 'Outros'
+        # Alimentação
+        if any(palavra in descricao for palavra in [
+            'ifood', 'rappi', 'uber eats', 'restaurante', 'padaria', 'mercado',
+            'supermercado', 'hortifruti', 'açougue', 'acougue', 'cafeteria',
+            'cafe', 'café', 'bar', 'lanchonete', 'food', 'burger'
+        ]):
+            return "Alimentação"
+        
+        # Transporte
+        if any(palavra in descricao for palavra in [
+            'uber', '99 pop', '99pop', 'taxi', 'táxi', 'combustivel', 'combustível',
+            'estacionamento', 'metro', 'metrô', 'onibus', 'ônibus', 'bilhete',
+            'posto', 'gasolina', 'etanol', 'alcool', 'álcool', 'uber*', 'uber x'
+        ]):
+            return "Transporte"
+        
+        # Entretenimento
+        if any(palavra in descricao for palavra in [
+            'netflix', 'spotify', 'cinema', 'teatro', 'show', 'ingresso',
+            'prime video', 'disney+', 'hbo', 'jogos', 'game', 'playstation',
+            'xbox', 'steam', 'livraria', 'livro', 'música', 'musica',
+            'streaming', 'assinatura'
+        ]):
+            return "Entretenimento"
+        
+        # Self Care
+        if any(palavra in descricao for palavra in [
+            'academia', 'farmacia', 'farmácia', 'drogaria', 'medico', 'médico',
+            'dentista', 'psicólogo', 'psicologo', 'terapia', 'spa', 'massagem',
+            'salao', 'salão', 'cabelereiro', 'manicure', 'pedicure', 'pilates',
+            'yoga', 'crossfit', 'gym', 'consulta', 'exame', 'clinica', 'clínica',
+            'hospital', 'remedio', 'remédio'
+        ]):
+            return "Self Care"
+        
+        # Compras (incluindo o que antes era "Outros")
+        return "Compras"
 
     # Função auxiliar para formatar valores
     def formatar_valor(valor):
@@ -440,7 +443,7 @@ elif authentication_status:
             )
         
         # Preparar dados para comparação mensal por categoria
-        categorias = ["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"]
+        categorias = ["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras"]
         dados_comparacao = []
         
         # Pegar os dois meses mais recentes
@@ -465,7 +468,8 @@ elif authentication_status:
             df_comparacao = pd.DataFrame(dados_comparacao)
             fig_comparacao = go.Figure()
             
-            for mes in df_comparacao['mes'].unique():
+            cores = ['#4B0082', '#9370DB']  # Roxo escuro e roxo claro
+            for i, mes in enumerate(df_comparacao['mes'].unique()):
                 dados_mes = df_comparacao[df_comparacao['mes'] == mes]
                 fig_comparacao.add_trace(go.Bar(
                     name=mes,
@@ -473,6 +477,7 @@ elif authentication_status:
                     y=dados_mes['valor'],
                     text=dados_mes['valor'].apply(lambda x: f'R$ {x:.2f}'),
                     textposition='auto',
+                    marker_color=cores[i]
                 ))
             
             fig_comparacao.update_layout(
@@ -481,7 +486,10 @@ elif authentication_status:
                 yaxis_title='Valor (R$)',
                 barmode='group',
                 showlegend=True,
-                height=500
+                height=500,
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                font=dict(color='#4B0082')
             )
             
             st.plotly_chart(fig_comparacao, use_container_width=True)
@@ -588,55 +596,85 @@ elif authentication_status:
     with tab_parcelas:
         st.header("🔄 Parcelas Futuras")
         
-        # Formulário para adicionar nova compra parcelada
-        with st.form("form_parcela"):
-            col1, col2, col3 = st.columns([2, 1, 1])
-            
-            with col1:
-                descricao_parcela = st.text_input("Descrição da Compra")
-            
-            with col2:
-                valor_total = st.number_input("Valor Total", min_value=0.0, format="%.2f")
-            
-            with col3:
-                num_parcelas = st.number_input("Número de Parcelas", min_value=1, value=1)
-            
-            data_inicio = st.date_input(
-                "Data da Primeira Parcela",
-                value=datetime.now(),
-                min_value=datetime(2020, 1, 1),
-                max_value=datetime(2030, 12, 31)
-            )
-            
-            if st.form_submit_button("Adicionar Compra Parcelada"):
-                if valor_total > 0 and descricao_parcela and num_parcelas > 0:
-                    adicionar_parcela(descricao_parcela, valor_total, num_parcelas, data_inicio)
-                    st.success("✓ Compra parcelada adicionada com sucesso!")
-                else:
-                    st.error("Por favor, preencha todos os campos.")
+        # Carregar dados
+        dados = carregar_dados()
+        faturas = dados.get('faturas', [])
         
-        # Mostrar parcelas do mês atual
-        st.subheader(f"Parcelas de {mes_selecionado}/{ano_selecionado}")
-        parcelas_mes = obter_parcelas_mes(mes_num, ano_selecionado)
+        # Identificar parcelas em todas as faturas
+        todas_parcelas = {}  # Dicionário para agrupar parcelas por descrição
+        for fatura in faturas:
+            for transacao in fatura['transacoes']:
+                descricao = transacao['descricao'].lower()
+                # Procurar padrões de parcelas (ex: 1/12, 01/12, 1 de 12, etc)
+                padrao_parcela = re.search(r'(\d{1,2})[^\d]+(\d{1,2})', descricao)
+                if padrao_parcela:
+                    parcela_atual = int(padrao_parcela.group(1))
+                    total_parcelas = int(padrao_parcela.group(2))
+                    
+                    # Criar chave única para a compra
+                    chave = re.sub(r'\d{1,2}[^\d]+\d{1,2}', '', descricao).strip()
+                    
+                    if chave not in todas_parcelas:
+                        todas_parcelas[chave] = {
+                            'descricao': chave,
+                            'valor_parcela': transacao['valor'],
+                            'total_parcelas': total_parcelas,
+                            'parcelas_vistas': {parcela_atual},
+                            'primeira_parcela': {
+                                'mes': fatura['mes'],
+                                'ano': fatura['ano']
+                            }
+                        }
+                    else:
+                        todas_parcelas[chave]['parcelas_vistas'].add(parcela_atual)
         
-        if parcelas_mes:
-            total_mes = sum(p['valor_parcela'] for p in parcelas_mes)
-            st.metric("Total de Parcelas do Mês", formatar_valor(total_mes))
+        # Calcular parcelas futuras
+        parcelas_futuras = {}
+        mes_atual = datetime.now().month
+        ano_atual = datetime.now().year
+        
+        for compra in todas_parcelas.values():
+            # Calcular mês/ano da primeira parcela
+            data_primeira = date(compra['primeira_parcela']['ano'], 
+                               compra['primeira_parcela']['mes'], 1)
             
-            for parcela in parcelas_mes:
-                col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+            # Para cada parcela que falta
+            for n_parcela in range(1, compra['total_parcelas'] + 1):
+                if n_parcela not in compra['parcelas_vistas']:
+                    # Calcular data da parcela
+                    meses_a_adicionar = n_parcela - 1
+                    data_parcela = data_primeira + relativedelta(months=meses_a_adicionar)
+                    
+                    # Se é uma parcela futura
+                    if data_parcela >= date(ano_atual, mes_atual, 1):
+                        chave_mes = (data_parcela.year, data_parcela.month)
+                        if chave_mes not in parcelas_futuras:
+                            parcelas_futuras[chave_mes] = []
+                        
+                        parcelas_futuras[chave_mes].append({
+                            'descricao': compra['descricao'],
+                            'valor': compra['valor_parcela'],
+                            'parcela': n_parcela,
+                            'total_parcelas': compra['total_parcelas']
+                        })
+        
+        # Mostrar parcelas futuras agrupadas por mês
+        for (ano, mes), parcelas in sorted(parcelas_futuras.items()):
+            mes_nome = list(mes_options.keys())[mes-1]
+            st.subheader(f"{mes_nome}/{ano}")
+            
+            total_mes = sum(p['valor'] for p in parcelas)
+            st.metric("Total do Mês", formatar_valor(total_mes))
+            
+            for parcela in parcelas:
+                col1, col2, col3 = st.columns([3, 2, 2])
                 with col1:
                     st.write(parcela['descricao'])
                 with col2:
-                    st.write(formatar_valor(parcela['valor_parcela']))
+                    st.write(formatar_valor(parcela['valor']))
                 with col3:
-                    st.write(f"Parcela {parcela['parcela_atual']}/{parcela['total_parcelas']}")
-                with col4:
-                    if st.button("🗑️", key=f"del_parcela_{parcela['descricao']}"):
-                        remover_parcela(parcela['descricao'], parcela['valor_total'])
-                        st.rerun()
-        else:
-            st.info("Nenhuma parcela para este mês.")
+                    st.write(f"Parcela {parcela['parcela']}/{parcela['total_parcelas']}")
+                st.markdown("---")
 
     # Na aba de Gastos Fixos
     with tab_fixos:
