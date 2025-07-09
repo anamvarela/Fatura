@@ -31,13 +31,8 @@ with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 
 # Criar o autenticador
-hashed_passwords = [config['credentials']['usernames'][username]['password'] for username in config['credentials']['usernames']]
 authenticator = stauth.Authenticate(
-    dict(
-        names=[config['credentials']['usernames'][username]["name"] for username in config['credentials']['usernames']],
-        usernames=list(config['credentials']['usernames'].keys()),
-        passwords=hashed_passwords
-    ),
+    config['credentials'],
     config['cookie']['name'],
     config['cookie']['key'],
     config['cookie']['expiry_days']
