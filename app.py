@@ -10,12 +10,8 @@ from historico_faturas import (
     adicionar_fatura, obter_fatura_anterior,
     calcular_variacao, formatar_variacao,
     limpar_historico, limpar_fatura,
-    verificar_fatura_existe, carregar_historico,
-    obter_entradas, adicionar_entradas, limpar_entradas,
-    calcular_total_parcelas_futuras,
     adicionar_gasto_fixo, remover_gasto_fixo,
-    obter_gastos_fixos, calcular_total_gastos_fixos,
-    obter_historico_gastos_mensais
+    obter_gastos_fixos, carregar_dados, salvar_dados
 )
 import json
 import yaml
@@ -160,9 +156,9 @@ else:
                                 continue
                                 
                             transacoes.append({
-                                'Data': data,
-                                'Descrição': descricao,
-                                'Valor': valor
+                                'data': data,
+                                'descricao': descricao,
+                                'valor': valor
                             })
                     except Exception as e:
                         st.warning(f"Erro ao processar linha: {linha}")
@@ -171,7 +167,19 @@ else:
             if not transacoes:
                 st.error("Não foi possível encontrar transações no arquivo. Certifique-se de que este é um arquivo de fatura do Nubank.")
                 return None
-                
+            
+            # Criar fatura
+            mes_num = mes_options[mes_selecionado]
+            fatura = {
+                'mes': mes_num,
+                'ano': ano_selecionado,
+                'transacoes': transacoes,
+                'total': sum(t['valor'] for t in transacoes)
+            }
+            
+            # Adicionar fatura ao histórico
+            adicionar_fatura(fatura)
+            
             return pd.DataFrame(transacoes)
         except Exception as e:
             st.error(f"Erro ao processar o PDF: {str(e)}")
@@ -251,6 +259,24 @@ else:
     def formatar_valor(valor):
         """Formata valor monetário com pontos e vírgulas"""
         return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    def adicionar_gasto_fixo_novo(transacao):
+        """Adiciona um novo gasto fixo"""
+        gasto = {
+            'descricao': transacao['descricao'],
+            'valor': transacao['valor'],
+            'categoria': transacao.get('categoria', 'Outros'),
+            'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        adicionar_gasto_fixo(gasto)
+        st.success('✅ Gasto fixo adicionado com sucesso!')
+        st.experimental_rerun()
+
+    def remover_gasto_fixo_novo(descricao, valor):
+        """Remove um gasto fixo"""
+        remover_gasto_fixo(descricao, valor)
+        st.success('✅ Gasto fixo removido com sucesso!')
+        st.experimental_rerun()
 
     # Aba de Inserir Fatura
     with tab_inserir:
@@ -832,142 +858,58 @@ else:
 
     # Aba de Gastos Fixos
     with tab_fixos:
-        st.header("📌 Gastos Fixos")
+        st.markdown("### 📌 Gastos Fixos")
         
-        # Formulário para adicionar novo gasto fixo manualmente
-        with st.expander("➕ Adicionar Novo Gasto Fixo", expanded=False):
-            with st.form("novo_gasto_fixo"):
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    nova_descricao = st.text_input("Descrição", key="nova_descricao_fixo")
-                    novo_valor = st.number_input("Valor (R$)", min_value=0.0, format="%.2f", key="novo_valor_fixo")
-                
-                with col2:
-                    nova_categoria = st.selectbox(
-                        "Categoria",
-                        options=['Alimentação', 'Transporte', 'Entretenimento', 'Self Care', 'Compras', 'Outros'],
-                        key="nova_categoria_fixo"
-                    )
-                
-                submitted = st.form_submit_button("💾 Salvar")
-                if submitted and nova_descricao and novo_valor > 0:
-                    # Adicionar novo gasto fixo
-                    novo_gasto = {
-                        'descricao': nova_descricao,
-                        'valor': novo_valor,
-                        'categoria': nova_categoria
+        # Formulário para adicionar novo gasto fixo
+        with st.form("form_gasto_fixo"):
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                descricao = st.text_input("Descrição do Gasto")
+            with col2:
+                valor = st.number_input("Valor (R$)", min_value=0.0, format="%.2f")
+            
+            if st.form_submit_button("➕ Adicionar Gasto Fixo"):
+                if descricao and valor > 0:
+                    gasto = {
+                        'descricao': descricao,
+                        'valor': valor,
+                        'categoria': 'Outros'
                     }
-                    adicionar_gasto_fixo(novo_gasto)
+                    adicionar_gasto_fixo(gasto)
                     st.success('✅ Gasto fixo adicionado com sucesso!')
                     st.experimental_rerun()
+                else:
+                    st.error("Por favor, preencha todos os campos.")
         
-        st.markdown("---")
-        
-        # Tabela de gastos fixos
-        st.subheader("📋 Lista de Gastos Fixos")
-        
+        # Lista de gastos fixos
         gastos_fixos = obter_gastos_fixos()
         if gastos_fixos:
+            total_fixo = sum(float(g['valor']) for g in gastos_fixos)
+            st.metric("Total Gastos Fixos", f"R$ {total_fixo:,.2f}")
+            
             # Criar DataFrame para exibição
             df_fixos = pd.DataFrame(gastos_fixos)
-            df_fixos.columns = ['Descrição', 'Valor', 'Categoria', 'Data Adição']
-            
-            # Formatar valor como moeda
-            df_fixos['Valor'] = df_fixos['Valor'].apply(formatar_valor)
-            
-            # Calcular total
-            total_fixo = sum(float(valor.replace('R$ ', '').replace('.', '').replace(',', '.')) for valor in df_fixos['Valor'])
-            
-            # Exibir total
-            st.metric(
-                "Total em Gastos Fixos",
-                formatar_valor(total_fixo),
-                help="Soma de todos os gastos fixos mensais"
-            )
-            
-            # Criar tabela mais compacta
-            st.markdown("""
-            <style>
-            .fixed-expenses-container {
-                padding: 0;
-                margin: 0;
-                font-size: 0.9em;
-            }
-            .fixed-expenses-header {
-                font-weight: bold;
-                color: #4B0082;
-                border-bottom: 1px solid #4B0082;
-                padding-bottom: 0.25rem;
-                margin-bottom: 0.25rem;
-                font-size: 0.9em;
-            }
-            .fixed-expenses-row {
-                padding: 0.2rem 0;
-                border-bottom: 1px solid #eee;
-                transition: background-color 0.2s;
-                line-height: 1;
-                margin: 0;
-            }
-            .fixed-expenses-row:last-child {
-                border-bottom: 1px solid #eee;
-            }
-            .fixed-expenses-row:hover {
-                background-color: #f8f8f8;
-            }
-            .stButton > button {
-                padding: 0rem 0.3rem;
-                height: 1.4rem;
-                line-height: 1;
-                margin: 0;
-            }
-            /* Ajustar espaçamento dos elementos dentro das colunas */
-            .fixed-expenses-row div[data-testid="column"] {
-                padding-top: 0 !important;
-                padding-bottom: 0 !important;
-            }
-            .fixed-expenses-row div[data-testid="column"] p {
-                margin: 0 !important;
-                padding: 0 !important;
-                line-height: 1.2 !important;
-            }
-            </style>
-            """, unsafe_allow_html=True)
-            
-            with st.container():
-                # Container principal (sem borda e fundo branco)
-                st.markdown('<div class="fixed-expenses-container">', unsafe_allow_html=True)
+            if not df_fixos.empty:
+                df_fixos['Valor'] = df_fixos['valor'].apply(lambda x: f"R$ {float(x):,.2f}")
+                df_fixos['Descrição'] = df_fixos['descricao']
+                df_fixos = df_fixos[['Descrição', 'Valor']]
                 
-                # Cabeçalho
-                col1, col2, col3, col4 = st.columns([3, 1.5, 1.5, 0.5])
-                with col1:
-                    st.markdown('<div class="fixed-expenses-header">Descrição</div>', unsafe_allow_html=True)
-                with col2:
-                    st.markdown('<div class="fixed-expenses-header">Valor</div>', unsafe_allow_html=True)
-                with col3:
-                    st.markdown('<div class="fixed-expenses-header">Categoria</div>', unsafe_allow_html=True)
-                
-                # Linhas de dados
+                # Exibir tabela com botão de exclusão
                 for idx, row in df_fixos.iterrows():
-                    st.markdown('<div class="fixed-expenses-row">', unsafe_allow_html=True)
-                    col1, col2, col3, col4 = st.columns([3, 1.5, 1.5, 0.5])
+                    col1, col2, col3 = st.columns([2, 1, 0.5])
                     with col1:
                         st.write(row['Descrição'])
                     with col2:
                         st.write(row['Valor'])
                     with col3:
-                        st.write(row['Categoria'])
-                    with col4:
                         if st.button("🗑️", key=f"del_fix_{idx}", help="Excluir gasto fixo"):
                             valor_float = float(row['Valor'].replace('R$ ', '').replace('.', '').replace(',', '.'))
                             remover_gasto_fixo(row['Descrição'], valor_float)
                             st.success('✅ Gasto fixo removido com sucesso!')
                             st.experimental_rerun()
-                    st.markdown('</div>', unsafe_allow_html=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
+                    st.markdown('---')
         else:
-            st.info("Nenhum gasto fixo cadastrado ainda.")
+            st.info("Nenhum gasto fixo cadastrado.")
 
     # Aba de Histórico
     with tab_historico:
