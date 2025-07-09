@@ -190,7 +190,6 @@ elif authentication_status:
             return None
 
     # Função para classificar transações
-    @st.cache_data
     def classificar_transacao(descricao):
         descricao = descricao.lower()
         
@@ -234,8 +233,8 @@ elif authentication_status:
 
     # Função auxiliar para formatar valores
     def formatar_valor(valor):
-        """Formata valor monetário com pontos e vírgulas"""
-        return f"R$ {valor:,.2f}"
+        """Formata um valor monetário com pontos para milhares e vírgula para decimais"""
+        return f"R$ {valor:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
 
     def adicionar_gasto_fixo_novo(transacao):
         """Adiciona um novo gasto fixo"""
@@ -733,60 +732,87 @@ elif authentication_status:
 
     # Na aba de Histórico
     with tab_historico:
-        st.header("📈 Histórico de Gastos")
+        st.header("📊 Histórico de Gastos")
         
-        # Obter dados históricos
+        # Carregar dados históricos
         dados = carregar_dados()
         faturas = dados.get('faturas', [])
         
         if not faturas:
-            st.info("Nenhum dado histórico encontrado.")
+            st.warning("Nenhum dado histórico encontrado.")
             st.stop()
         
-        # Tabela de totais mensais
-        st.subheader("Totais Mensais")
-        totais_mensais = []
-        for fatura in sorted(faturas, key=lambda x: (int(x['ano']), int(x['mes']))):
-            total_mes = sum(t['valor'] for t in fatura['transacoes'])
-            totais_mensais.append({
-                'Mês': f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}",
-                'Total': f"R$ {total_mes:.2f}"
+        # Criar DataFrame com histórico
+        historico = []
+        for fatura in faturas:
+            mes_ano = f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}"
+            total = sum(t['valor'] for t in fatura['transacoes'])
+            historico.append({
+                'Mês': mes_ano,
+                'Total': total,
+                'mes_num': fatura['mes'],
+                'ano': fatura['ano']
             })
         
-        if totais_mensais:
-            df_totais = pd.DataFrame(totais_mensais)
-            st.dataframe(df_totais)
+        df_historico = pd.DataFrame(historico)
+        df_historico = df_historico.sort_values(by=['ano', 'mes_num'])
         
-        # Gráfico de evolução
-        st.subheader("Evolução dos Gastos")
-        
-        # Preparar dados para o gráfico de evolução
-        evolucao_data = []
-        for fatura in sorted(faturas, key=lambda x: (int(x['ano']), int(x['mes']))):
-            total_gasto = sum(t['valor'] for t in fatura['transacoes'])
-            evolucao_data.append({
-                'mes': int(fatura['mes']),
-                'ano': int(fatura['ano']),
-                'total': float(total_gasto)
-            })
-        
-        # Criar gráfico de evolução
-        df_evolucao = pd.DataFrame(evolucao_data)
-        fig_evolucao = go.Figure()
-        fig_evolucao.add_trace(go.Scatter(
-            x=[f"{list(mes_options.keys())[int(row['mes'])-1]}/{int(row['ano'])}" for _, row in df_evolucao.iterrows()],
-            y=df_evolucao['total'],
-            mode='lines+markers',
-            name='Total Gasto',
+        # Criar gráfico de linha
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=df_historico['Mês'],
+            y=df_historico['Total'],
+            mode='lines+markers+text',
+            text=df_historico['Total'].apply(lambda x: formatar_valor(x)),
+            textposition='top center',
             line=dict(color='#4B0082', width=2),
-            marker=dict(size=8)
+            marker=dict(color='#9370DB', size=8)
         ))
         
-        fig_evolucao.update_layout(
-            title="Evolução dos Gastos Mensais",
-            xaxis_title="Mês/Ano",
-            yaxis_title="Valor Total (R$)",
-            showlegend=True
+        fig.update_layout(
+            title='Evolução dos Gastos',
+            xaxis_title='Mês',
+            yaxis_title='Valor Total (R$)',
+            showlegend=False,
+            height=400,
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='#4B0082')
         )
         
-        st.plotly_chart(fig_evolucao, use_container_width=True) 
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Tabela de histórico
+        df_display = df_historico[['Mês', 'Total']].copy()
+        df_display['Total'] = df_display['Total'].apply(formatar_valor)
+        st.dataframe(
+            df_display,
+            hide_index=True,
+            column_config={
+                "Mês": st.column_config.TextColumn("Mês"),
+                "Total": st.column_config.TextColumn("Total", width="small")
+            }
+        )
+
+    # Estilo para tabelas mais finas
+    st.markdown("""
+<style>
+    .dataframe {
+        font-size: 12px;
+    }
+    .dataframe td, .dataframe th {
+        padding: 4px !important;
+        border: 1px solid #ddd !important;
+    }
+    div[data-testid="stHorizontalBlock"] {
+        gap: 0.5rem !important;
+    }
+    div[data-testid="column"] {
+        padding: 0 !important;
+    }
+    hr {
+        margin: 0.5rem 0 !important;
+        border-color: #ddd !important;
+    }
+</style>
+""", unsafe_allow_html=True) 
