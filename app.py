@@ -15,6 +15,7 @@ from historico_faturas import (
 )
 import json
 import yaml
+from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 from pathlib import Path
 
@@ -27,24 +28,25 @@ st.set_page_config(
 
 # Carregar configurações de autenticação
 with open('config.yaml') as file:
-    config = yaml.load(file, Loader=yaml.SafeLoader)
+    config = yaml.load(file, Loader=SafeLoader)
 
-# Criar o autenticador
+# Inicializar o autenticador
 authenticator = stauth.Authenticate(
     config['credentials']['usernames'],
     config['cookie']['name'],
     config['cookie']['key'],
-    config['cookie']['expiry_days']
+    config['cookie']['expiry_days'],
+    config['credentials']['usernames']
 )
 
-# Adicionar login
-name, authentication_status, username = authenticator.login('Login')
+# Adicionar login widget
+name, authentication_status, username = authenticator.login('Login', 'main')
 
 if authentication_status == False:
     st.error('Username/password is incorrect')
 elif authentication_status == None:
     st.warning('Please enter your username and password')
-else:
+elif authentication_status:
     # Criar diretório do usuário se não existir
     user_dir = Path(f"data/{username}")
     user_dir.mkdir(parents=True, exist_ok=True)
@@ -54,7 +56,7 @@ else:
     
     # Adicionar logout na sidebar
     with st.sidebar:
-        authenticator.logout('Logout')
+        authenticator.logout('Logout', 'sidebar')
     
     # Título principal com nome do usuário
     st.markdown(f"<h1 class='main-header'>Análise Faturas Nubank - {name}</h1>", unsafe_allow_html=True)
