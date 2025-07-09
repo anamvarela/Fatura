@@ -441,12 +441,15 @@ elif authentication_status:
                 delta=f"{formatar_valor(total_atual - total_anterior)}" if total_anterior > 0 else None
             )
         
+        # Na aba de Análise, ajustar a parte do gráfico de comparação
         # Preparar dados para comparação mensal por categoria
         categorias = ["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras"]
         dados_comparacao = []
         
         # Pegar os dois meses mais recentes
         faturas_ordenadas = sorted(faturas, key=lambda x: (int(x['ano']), int(x['mes'])), reverse=True)[:2]
+        faturas_ordenadas.reverse()  # Inverter para mês anterior vir primeiro
+        
         if len(faturas_ordenadas) >= 2:
             for categoria in categorias:
                 valores = []
@@ -467,8 +470,10 @@ elif authentication_status:
             df_comparacao = pd.DataFrame(dados_comparacao)
             fig_comparacao = go.Figure()
             
-            cores = ['#4B0082', '#9370DB']  # Roxo escuro e roxo claro
-            for i, mes in enumerate(df_comparacao['mes'].unique()):
+            cores = ['#9370DB', '#4B0082']  # Roxo claro (mês anterior) e roxo escuro (mês atual)
+            meses_unicos = df_comparacao['mes'].unique()  # Já estará na ordem correta devido ao reverse acima
+            
+            for i, mes in enumerate(meses_unicos):
                 dados_mes = df_comparacao[df_comparacao['mes'] == mes]
                 fig_comparacao.add_trace(go.Bar(
                     name=mes,
