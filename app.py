@@ -11,7 +11,8 @@ from historico_faturas import (
     calcular_variacao, formatar_variacao,
     limpar_historico, limpar_fatura,
     adicionar_gasto_fixo, remover_gasto_fixo,
-    obter_gastos_fixos, carregar_dados, salvar_dados
+    obter_gastos_fixos, carregar_dados, salvar_dados,
+    adicionar_entrada, remover_entrada, obter_entradas
 )
 import json
 import yaml
@@ -316,202 +317,61 @@ elif authentication_status:
                 limpar_fatura(mes_num, ano_selecionado)
                 st.success(f"Dados de {mes_selecionado}/{ano_selecionado} removidos!")
 
-    # Aba de Entradas
+    # Na aba de Entradas do Mês
     with tab_entradas:
-        st.subheader("Registrar Entradas do Mês")
+        st.header("💰 Entradas do Mês")
         
-        # Carregar entradas existentes
-        mes_num = mes_options[mes_selecionado]
-        entradas_existentes = obter_entradas(mes_num, ano_selecionado)
-        
-        # Lista para armazenar as entradas
-        if 'entradas_temp' not in st.session_state:
-            if entradas_existentes:
-                # Migrar do formato antigo se necessário
-                if 'entradas' in entradas_existentes:
-                    st.session_state.entradas_temp = entradas_existentes['entradas']
-                else:
-                    # Converter formato antigo para novo
-                    st.session_state.entradas_temp = [
-                        {
-                            'valor': float(entradas_existentes.get('salario_fixo', 0)),
-                            'descricao': 'Salário Fixo',
-                            'tipo': 'fixo'
-                        }
-                    ]
-                    if entradas_existentes.get('renda_extra', 0) > 0:
-                        st.session_state.entradas_temp.append({
-                            'valor': float(entradas_existentes.get('renda_extra', 0)),
-                            'descricao': 'Renda Extra',
-                            'tipo': 'extra'
-                        })
-            else:
-                st.session_state.entradas_temp = []
-        
-        # Função para adicionar nova entrada
-        def adicionar_entrada(valor, descricao, tipo):
-            if valor > 0 and descricao.strip():
-                st.session_state.entradas_temp.append({
-                    'valor': valor,
-                    'descricao': descricao.strip(),
-                    'tipo': tipo
-                })
-                return True
-            return False
-        
-        # Função para remover entrada
-        def remover_entrada(idx):
-            del st.session_state.entradas_temp[idx]
-        
-        # Formulário para nova entrada
-        st.subheader("Nova Entrada")
-        with st.form("nova_entrada", clear_on_submit=True):
+        # Formulário para adicionar entrada
+        with st.form("form_entrada"):
             col1, col2, col3 = st.columns([2, 2, 1])
             
             with col1:
-                valor = st.number_input(
-                    "Valor",
-                    min_value=0.0,
-                    value=0.0,
-                    format="%.2f",
-                    help="Use ponto como separador decimal"
-                )
-                # Mostrar valor formatado abaixo do input
-                if valor > 0:
-                    st.caption(f"Valor formatado: {formatar_valor(valor)}")
+                valor_entrada = st.number_input("Valor", min_value=0.0, format="%.2f")
             
             with col2:
-                descricao = st.text_input(
-                    "Descrição",
-                    value="",
-                    placeholder="Ex: Salário, Freelance, Bônus..."
-                )
+                descricao_entrada = st.text_input("Descrição")
             
             with col3:
-                tipo = st.selectbox(
+                tipo_entrada = st.selectbox(
                     "Tipo",
-                    options=["fixo", "extra"],
-                    help="Fixo: recebimentos regulares como salário\nExtra: recebimentos ocasionais"
+                    options=["Salário", "Freelance", "Outros"]
                 )
             
-            if st.form_submit_button("➕ Adicionar Entrada", use_container_width=True):
-                if adicionar_entrada(valor, descricao, tipo):
-                    st.success("Entrada adicionada!")
-                    st.experimental_rerun()
+            if st.form_submit_button("Adicionar Entrada"):
+                if valor_entrada > 0 and descricao_entrada:
+                    adicionar_entrada(mes_num, ano_selecionado, valor_entrada, descricao_entrada, tipo_entrada)
+                    st.success("✓ Entrada adicionada com sucesso!")
                 else:
-                    st.error("Por favor, preencha o valor e a descrição.")
-        
-        # Mostrar lista de entradas
-        if st.session_state.entradas_temp:
-            st.subheader("Entradas Registradas")
-            
-            # Calcular totais
-            total_fixo = sum(e['valor'] for e in st.session_state.entradas_temp if e['tipo'] == 'fixo')
-            total_extra = sum(e['valor'] for e in st.session_state.entradas_temp if e['tipo'] == 'extra')
-            total_geral = total_fixo + total_extra
-            
-            # Mostrar totais
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Total Fixo", formatar_valor(total_fixo))
-            with col2:
-                st.metric("Total Extra", formatar_valor(total_extra))
-            with col3:
-                st.metric("Total Geral", formatar_valor(total_geral))
-            
-            # Estilo da tabela de entradas
-            st.markdown("""
-            <style>
-            .income-container {
-                padding: 0;
-                margin: 0;
-                font-size: 0.9em;
-            }
-            .income-header {
-                font-weight: bold;
-                color: #4B0082;
-                border-bottom: 1px solid #4B0082;
-                padding-bottom: 0.25rem;
-                margin-bottom: 0.25rem;
-                font-size: 0.9em;
-            }
-            .income-row {
-                padding: 0.2rem 0;
-                border-bottom: 1px solid #eee;
-                transition: background-color 0.2s;
-                line-height: 1;
-                margin: 0;
-            }
-            .income-row:last-child {
-                border-bottom: 1px solid #eee;
-            }
-            .income-row:hover {
-                background-color: #f8f8f8;
-            }
-            .income-row div[data-testid="column"] {
-                padding-top: 0 !important;
-                padding-bottom: 0 !important;
-            }
-            .income-row div[data-testid="column"] p {
-                margin: 0 !important;
-                padding: 0 !important;
-                line-height: 1.2 !important;
-            }
-            </style>
-            """, unsafe_allow_html=True)
-            
-            # Container principal
-            st.markdown('<div class="income-container">', unsafe_allow_html=True)
-            
-            # Cabeçalho
-            col1, col2, col3, col4 = st.columns([1.5, 2, 1, 0.5])
-            with col1:
-                st.markdown('<div class="income-header">Valor</div>', unsafe_allow_html=True)
-            with col2:
-                st.markdown('<div class="income-header">Descrição</div>', unsafe_allow_html=True)
-            with col3:
-                st.markdown('<div class="income-header">Tipo</div>', unsafe_allow_html=True)
-            
-            # Mostrar entradas
-            for idx, entrada in enumerate(st.session_state.entradas_temp):
-                st.markdown('<div class="income-row">', unsafe_allow_html=True)
-                col1, col2, col3, col4 = st.columns([1.5, 2, 1, 0.5])
+                    st.error("Por favor, preencha todos os campos.")
+
+        # Mostrar entradas existentes
+        entradas_existentes = obter_entradas(mes_num, ano_selecionado)
+        if entradas_existentes:
+            st.write("### Entradas Registradas")
+            for idx, entrada in enumerate(entradas_existentes):
+                col1, col2, col3, col4 = st.columns([1, 2, 1, 1])
                 with col1:
-                    st.write(formatar_valor(entrada['valor']))
+                    st.write(f"R$ {entrada['valor']:.2f}")
                 with col2:
                     st.write(entrada['descricao'])
                 with col3:
-                    st.write("🔄 Fixo" if entrada['tipo'] == 'fixo' else "💫 Extra")
+                    st.write(entrada['tipo'])
                 with col4:
-                    if st.button("🗑️", key=f"del_{idx}", help="Excluir entrada"):
-                        remover_entrada(idx)
-                        st.experimental_rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+                    if st.button("🗑️", key=f"del_entrada_{idx}"):
+                        remover_entrada(
+                            entrada['mes'],
+                            entrada['ano'],
+                            entrada['valor'],
+                            entrada['descricao'],
+                            entrada['tipo']
+                        )
+                        st.rerun()
             
-            st.markdown('</div>', unsafe_allow_html=True)
+            # Mostrar total
+            total_entradas = sum(e['valor'] for e in entradas_existentes)
+            st.metric("Total de Entradas", f"R$ {total_entradas:.2f}")
         else:
             st.info("Nenhuma entrada registrada para este mês.")
-        
-        # Botões de ação
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.button("💾 Salvar Entradas", use_container_width=True):
-                try:
-                    historico = adicionar_entradas(
-                        mes_num,
-                        ano_selecionado,
-                        st.session_state.entradas_temp
-                    )
-                    st.success(f"Entradas de {mes_selecionado}/{ano_selecionado} salvas com sucesso!")
-                except Exception as e:
-                    st.error(f"Erro ao salvar entradas: {str(e)}")
-        
-        with col2:
-            if st.button("🗑️ Limpar Entradas", use_container_width=True):
-                st.session_state.entradas_temp = []
-                limpar_entradas(mes_num, ano_selecionado)
-                st.success(f"Entradas de {mes_selecionado}/{ano_selecionado} removidas!")
 
     # Aba de Análise
     with tab_analise:

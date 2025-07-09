@@ -14,10 +14,13 @@ def carregar_dados():
     """Carrega os dados do arquivo JSON do usuário"""
     arquivo = get_user_data_file()
     if not arquivo.exists():
-        return {'faturas': [], 'gastos_fixos': []}
+        return {'faturas': [], 'gastos_fixos': [], 'entradas': []}
     
     with open(arquivo) as f:
-        return json.load(f)
+        dados = json.load(f)
+        if 'entradas' not in dados:
+            dados['entradas'] = []
+        return dados
 
 def salvar_dados(dados):
     """Salva os dados no arquivo JSON do usuário"""
@@ -83,3 +86,33 @@ def remover_gasto_fixo(descricao, valor):
 def obter_gastos_fixos():
     """Retorna a lista de gastos fixos"""
     return carregar_dados().get('gastos_fixos', []) 
+
+def adicionar_entrada(mes, ano, valor, descricao, tipo):
+    """Adiciona uma nova entrada ao mês"""
+    dados = carregar_dados()
+    entrada = {
+        'mes': mes,
+        'ano': ano,
+        'valor': valor,
+        'descricao': descricao,
+        'tipo': tipo
+    }
+    dados['entradas'].append(entrada)
+    salvar_dados(dados)
+
+def remover_entrada(mes, ano, valor, descricao, tipo):
+    """Remove uma entrada específica"""
+    dados = carregar_dados()
+    dados['entradas'] = [e for e in dados['entradas'] 
+                        if not (e['mes'] == mes and 
+                               e['ano'] == ano and 
+                               abs(float(e['valor']) - valor) < 0.01 and
+                               e['descricao'] == descricao and
+                               e['tipo'] == tipo)]
+    salvar_dados(dados)
+
+def obter_entradas(mes, ano):
+    """Retorna todas as entradas de um mês específico"""
+    dados = carregar_dados()
+    return [e for e in dados['entradas'] 
+            if e['mes'] == mes and e['ano'] == ano] 
