@@ -30,15 +30,18 @@ st.set_page_config(
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 
-# Configurar autenticação
-names = [config['credentials']['usernames'][username]["name"] for username in config['credentials']['usernames']]
-usernames = list(config['credentials']['usernames'].keys())
-passwords = [config['credentials']['usernames'][username]["password"] for username in config['credentials']['usernames']]
-
 # Criar o autenticador
-authenticator = stauth.Authenticate(names, usernames, passwords,
-    config['cookie']['name'], config['cookie']['key'],
-    config['cookie']['expiry_days'])
+hashed_passwords = [config['credentials']['usernames'][username]['password'] for username in config['credentials']['usernames']]
+authenticator = stauth.Authenticate(
+    dict(
+        names=[config['credentials']['usernames'][username]["name"] for username in config['credentials']['usernames']],
+        usernames=list(config['credentials']['usernames'].keys()),
+        passwords=hashed_passwords
+    ),
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days']
+)
 
 # Adicionar login
 name, authentication_status, username = authenticator.login('Login')
