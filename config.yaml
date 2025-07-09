@@ -1,14 +1,18 @@
-cookie:
-  expiry_days: 30
-  key: some_signature_key
-  name: some_cookie_name
 credentials:
   usernames:
     anavarela:
       email: anabarrosvarela@gmail.com
       name: Ana Maria Barros Varela
-      password: $2b$12$X0cXB8f2nJTRb5x0M57jieoYR/0PN0nfy/pGExmxcktCnrchM3xCu
+      password: $2b$12$N06qtTOEf.wGWJL9Pr5o7uCpJ73uAsUClJ/dQImM/.v4NP08gyOzG
     juliaabreu:
       email: juliaabreu2002@gmail.com
       name: Julia Abreu
-      password: $2b$12$HMs1jc07PGmTd42KeSo6Lej.P2eRei1OG8AUn0iLe4nkWGhZSidz6
+      password: $2b$12$zvDHMbN4.9YNaWPJ0zQB0ec/ULte.FQHIsbb5uIDwmIS4UAvsWybK
+cookie:
+  expiry_days: 30
+  key: some_signature_key
+  name: some_cookie_name
+preauthorized:
+  emails:
+    - anabarrosvarela@gmail.com
+    - juliaabreu2002@gmail.com

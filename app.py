@@ -30,15 +30,16 @@ st.set_page_config(
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 
-# Inicializar o autenticador
-authenticator = stauth.Authenticate(
+# Criar o autenticador
+authenticator = stauth.authenticate(
     config['credentials'],
     config['cookie']['name'],
     config['cookie']['key'],
-    config['cookie']['expiry_days']
+    config['cookie']['expiry_days'],
+    config['preauthorized']
 )
 
-# Adicionar login widget
+# Adicionar login
 name, authentication_status, username = authenticator.login('Login')
 
 if authentication_status == False:
