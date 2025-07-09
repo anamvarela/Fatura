@@ -5,7 +5,9 @@ from pathlib import Path
 
 def get_user_data_file():
     """Retorna o caminho do arquivo de dados do usuário atual"""
-    user_dir = Path(st.session_state.get('user_data_dir', 'data/default'))
+    if 'user_data_dir' not in st.session_state:
+        st.session_state['user_data_dir'] = 'data/default'
+    user_dir = Path(st.session_state['user_data_dir'])
     return user_dir / 'faturas.json'
 
 def carregar_dados():

@@ -26,6 +26,10 @@ st.set_page_config(
     layout="wide",
 )
 
+# Inicializar variáveis de sessão
+if 'user_data_dir' not in st.session_state:
+    st.session_state['user_data_dir'] = 'data/default'
+
 # Carregar configurações de autenticação
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
