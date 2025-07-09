@@ -37,8 +37,8 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=config['cookie']['expiry_days']
 )
 
-# Adicionar login na área principal
-name, authentication_status, username = authenticator.login('Login', location='main')
+# Adicionar login
+name, authentication_status, username = authenticator.login('Login')
 
 if authentication_status == False:
     st.error('Username/password is incorrect')
@@ -54,7 +54,7 @@ else:
     
     # Adicionar logout na sidebar
     with st.sidebar:
-        authenticator.logout('Logout', location='sidebar')
+        authenticator.logout('Logout')
     
     # Título principal com nome do usuário
     st.markdown(f"<h1 class='main-header'>Análise Faturas Nubank - {name}</h1>", unsafe_allow_html=True)
