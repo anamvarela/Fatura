@@ -159,11 +159,52 @@ def obter_parcelas_futuras(mes_atual=None, ano_atual=None):
     
     return parcelas_futuras
 
-def adicionar_fatura(fatura):
-    """Adiciona uma nova fatura ao histórico"""
+def adicionar_fatura(df=None, mes=None, ano=None, fatura=None):
+    """
+    Adiciona uma nova fatura ao histórico.
+    Pode receber um DataFrame com as transações + mês e ano,
+    ou um dicionário de fatura já formatado.
+    """
     dados = carregar_dados()
-    dados['faturas'].append(fatura)
+    
+    if fatura is not None:
+        # Se recebeu uma fatura já formatada
+        nova_fatura = fatura
+    else:
+        # Se recebeu um DataFrame, formata a fatura
+        if df is None or mes is None or ano is None:
+            raise ValueError("É necessário fornecer df, mes e ano ou uma fatura formatada")
+            
+        # Formatar as transações
+        transacoes = []
+        for _, row in df.iterrows():
+            transacao = {
+                'data': row['data'],
+                'descricao': row['descricao'],
+                'valor': float(row['valor']),
+                'categoria': classificar_transacao(row['descricao'])
+            }
+            transacoes.append(transacao)
+        
+        # Criar a nova fatura
+        nova_fatura = {
+            'mes': mes,
+            'ano': ano,
+            'transacoes': transacoes
+        }
+    
+    # Verificar se já existe uma fatura para este mês/ano
+    for i, f in enumerate(dados['faturas']):
+        if f['mes'] == nova_fatura['mes'] and f['ano'] == nova_fatura['ano']:
+            # Atualizar fatura existente
+            dados['faturas'][i] = nova_fatura
+            salvar_dados(dados)
+            return dados
+    
+    # Adicionar nova fatura
+    dados['faturas'].append(nova_fatura)
     salvar_dados(dados)
+    return dados
 
 def obter_fatura_anterior(mes_atual):
     """Obtém a fatura do mês anterior"""
