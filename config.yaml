@@ -1,0 +1,18 @@
+credentials:
+  usernames:
+    anavarela:
+      email: anabarrosvarela@gmail.com
+      name: Ana Maria Barros Varela
+      password: $2b$12$example_hash  # Será substituído quando você rodar o script novamente
+    juliaabreu:
+      email: juliaabreu2002@gmail.com
+      name: Julia Abreu
+      password: $2b$12$example_hash  # Será substituído quando você rodar o script novamente
+cookie:
+  expiry_days: 30
+  key: some_signature_key
+  name: fatura_auth
+preauthorized:
+  emails:
+    - anabarrosvarela@gmail.com
+    - juliaabreu2002@gmail.com 
