@@ -1,59 +1,38 @@
-import bcrypt
+import streamlit_authenticator as stauth
 import yaml
+from yaml.loader import SafeLoader
+from yaml.dumper import SafeDumper
 from getpass import getpass
 
-def hash_password(password):
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
 def main():
-    print("Configuração de senhas para o app de faturas")
-    print("-------------------------------------------")
+    print("\n=== Configuração de Senhas para o App de Faturas ===\n")
     
-    # Carregar configuração existente
-    try:
-        with open('config.yaml') as file:
-            config = yaml.safe_load(file)
-    except:
-        config = {
-            'credentials': {
-                'usernames': {}
-            },
-            'cookie': {
-                'expiry_days': 30,
-                'key': 'some_signature_key',
-                'name': 'fatura_auth'
-            }
-        }
+    # Carregar configuração atual
+    with open('config.yaml', 'r') as file:
+        config = yaml.load(file, Loader=SafeLoader)
     
-    while True:
-        username = input("\nDigite o nome de usuário (ou ENTER para sair): ").strip()
-        if not username:
-            break
-            
-        email = input("Digite o email: ").strip()
-        name = input("Digite o nome completo: ").strip()
+    # Lista de usuários para configurar
+    users = ['anavarela', 'juliaabreu']
+    
+    for username in users:
+        print(f"\nConfigurando senha para: {username}")
         password = getpass("Digite a senha: ")
+        confirm_password = getpass("Confirme a senha: ")
         
-        # Gerar hash da senha
-        hashed_password = hash_password(password)
+        if password != confirm_password:
+            print("As senhas não coincidem! Tente novamente.")
+            continue
         
-        # Adicionar ou atualizar usuário
-        if 'credentials' not in config:
-            config['credentials'] = {'usernames': {}}
-        
-        config['credentials']['usernames'][username] = {
-            'email': email,
-            'name': name,
-            'password': hashed_password
-        }
-        
-        print(f"\nUsuário {username} configurado com sucesso!")
+        if username in config['credentials']['usernames']:
+            hashed_password = stauth.Hasher([password]).generate()[0]
+            config['credentials']['usernames'][username]['password'] = hashed_password
+            print(f"✓ Senha atualizada com sucesso para {username}")
     
-    # Salvar configuração
+    # Salvar configuração atualizada
     with open('config.yaml', 'w') as file:
-        yaml.dump(config, file)
+        yaml.dump(config, file, Dumper=SafeDumper)
     
-    print("\nConfigurações salvas em config.yaml")
+    print("\n✓ Configurações salvas em config.yaml")
 
 if __name__ == "__main__":
     main() 
