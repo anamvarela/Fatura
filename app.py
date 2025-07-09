@@ -105,6 +105,8 @@ elif authentication_status:
             options=list(mes_options.keys()),
             index=datetime.now().month - 1
         )
+        # Definir mes_num logo após a seleção
+        mes_num = mes_options[mes_selecionado]
 
     with col2:
         ano_atual = datetime.now().year
