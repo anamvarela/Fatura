@@ -25,6 +25,7 @@ from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 from pathlib import Path
 import time
+import os
 
 # Configuração da página
 st.set_page_config(
@@ -408,6 +409,60 @@ elif authentication_status:
         else:
             st.info("Nenhuma parcela para este mês.")
 
+    # Na aba de Gastos Fixos
+    with tab_fixos:
+        st.header("📌 Gastos Fixos")
+        
+        # Seção para adicionar novo gasto fixo
+        st.subheader("Adicionar Gasto Fixo Mensal")
+        col1, col2 = st.columns(2)
+        with col1:
+            descricao = st.text_input("Descrição")
+            valor = st.number_input("Valor Mensal", min_value=0.0, step=0.01)
+        with col2:
+            categoria = st.selectbox(
+                "Categoria",
+                options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"]
+            )
+        
+        if st.button("Adicionar Gasto Fixo"):
+            gastos_fixos = carregar_gastos_fixos()
+            novo_gasto = {
+                "descricao": descricao,
+                "valor": valor,
+                "categoria": categoria
+            }
+            gastos_fixos.append(novo_gasto)
+            salvar_gastos_fixos(gastos_fixos)
+            st.success("Gasto fixo adicionado com sucesso!")
+            
+        # Mostrar tabela de gastos fixos mensais
+        st.subheader("Gastos Fixos Cadastrados")
+        gastos_fixos = carregar_gastos_fixos()
+        if gastos_fixos:
+            df_fixos = pd.DataFrame(gastos_fixos)
+            st.dataframe(df_fixos)
+            
+        # Mostrar transações marcadas como fixas
+        st.subheader("Transações Marcadas como Fixas")
+        transacoes_fixas = []
+        for fatura in faturas:
+            for transacao in fatura['transacoes']:
+                if transacao.get('fixo', False):
+                    transacao_com_data = {
+                        'data': f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}",
+                        'descricao': transacao['descricao'],
+                        'valor': transacao['valor'],
+                        'categoria': transacao['categoria']
+                    }
+                    transacoes_fixas.append(transacao_com_data)
+        
+        if transacoes_fixas:
+            df_transacoes_fixas = pd.DataFrame(transacoes_fixas)
+            st.dataframe(df_transacoes_fixas)
+        else:
+            st.info("Nenhuma transação marcada como fixa.")
+
     # Na aba de Histórico
     with tab_historico:
         st.header("📈 Histórico de Gastos")
@@ -516,40 +571,52 @@ elif authentication_status:
                 delta=f"{formatar_valor(total_atual - total_anterior)}" if total_anterior > 0 else None
             )
         
-        # Preparar dados para comparação mensal
-        meses_comparacao = []
-        for fatura in faturas:
-            if fatura['ano'] == ano_selecionado or (fatura['ano'] == ano_selecionado - 1 and fatura['mes'] >= mes_num):
-                total = sum(t['valor'] for t in fatura['transacoes'])
-                meses_comparacao.append({
-                    'mes': int(fatura['mes']),
-                    'ano': int(fatura['ano']),
-                    'total': float(total)
-                })
+        # Preparar dados para comparação mensal por categoria
+        categorias = ["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"]
+        dados_comparacao = []
         
-        # Criar gráfico de comparação
-        df_comparacao = pd.DataFrame(meses_comparacao)
-        df_comparacao['mes_nome'] = df_comparacao['mes'].apply(lambda x: list(mes_options.keys())[int(x)-1])
-        
-        fig_comparacao = go.Figure()
-        
-        # Adicionar barras para cada mês
-        fig_comparacao.add_trace(go.Bar(
-            x=df_comparacao['mes_nome'],
-            y=df_comparacao['total'],
-            name='Total Gasto',
-            marker_color='#4B0082'
-        ))
-        
-        # Configurar layout
-        fig_comparacao.update_layout(
-            title="Comparação de Gastos Mensais",
-            xaxis_title="Mês",
-            yaxis_title="Valor Total (R$)",
-            showlegend=False
-        )
-        
-        st.plotly_chart(fig_comparacao, use_container_width=True)
+        # Pegar os dois meses mais recentes
+        faturas_ordenadas = sorted(faturas, key=lambda x: (int(x['ano']), int(x['mes'])), reverse=True)[:2]
+        if len(faturas_ordenadas) >= 2:
+            for categoria in categorias:
+                valores = []
+                meses = []
+                for fatura in faturas_ordenadas:
+                    total_categoria = sum(t['valor'] for t in fatura['transacoes'] if t['categoria'] == categoria)
+                    valores.append(total_categoria)
+                    meses.append(f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}")
+                
+                for mes, valor in zip(meses, valores):
+                    dados_comparacao.append({
+                        'categoria': categoria,
+                        'mes': mes,
+                        'valor': valor
+                    })
+            
+            # Criar gráfico de comparação
+            df_comparacao = pd.DataFrame(dados_comparacao)
+            fig_comparacao = go.Figure()
+            
+            for mes in df_comparacao['mes'].unique():
+                dados_mes = df_comparacao[df_comparacao['mes'] == mes]
+                fig_comparacao.add_trace(go.Bar(
+                    name=mes,
+                    x=dados_mes['categoria'],
+                    y=dados_mes['valor'],
+                    text=dados_mes['valor'].apply(lambda x: f'R$ {x:.2f}'),
+                    textposition='auto',
+                ))
+            
+            fig_comparacao.update_layout(
+                title='Comparação de Gastos por Categoria',
+                xaxis_title='Categoria',
+                yaxis_title='Valor (R$)',
+                barmode='group',
+                showlegend=True,
+                height=500
+            )
+            
+            st.plotly_chart(fig_comparacao, use_container_width=True)
         
         # Mostrar detalhamento por categoria
         st.write("### Detalhamento por Categoria")
