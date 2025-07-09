@@ -125,24 +125,6 @@ elif authentication_status:
         'Setembro': 9, 'Outubro': 10, 'Novembro': 11, 'Dezembro': 12
     }
 
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        mes_selecionado = st.selectbox(
-            "Selecione o Mês",
-            options=list(mes_options.keys()),
-            index=datetime.now().month - 1
-        )
-        # Definir mes_num logo após a seleção
-        mes_num = mes_options[mes_selecionado]
-
-    with col2:
-        ano_atual = datetime.now().year
-        ano_selecionado = st.selectbox(
-            "Ano",
-            options=range(ano_atual-2, ano_atual+1),
-            index=2
-        )
-
     # Funções de processamento
     @st.cache_data(ttl=600)
     def processar_pdf(arquivo_pdf):
@@ -280,6 +262,14 @@ elif authentication_status:
         "📈 Histórico"
     ])
 
+    # Seleção global de mês e ano
+    col1, col2 = st.columns(2)
+    with col1:
+        mes_selecionado = st.selectbox("Mês", options=list(mes_options.keys()))
+        mes_num = mes_options[mes_selecionado]
+    with col2:
+        ano_selecionado = st.selectbox("Ano", options=list(range(2024, 2020, -1)))
+
     # Aba de Inserir Fatura
     with tab_inserir:
         st.subheader("Inserir Nova Fatura")
@@ -296,9 +286,6 @@ elif authentication_status:
         col1, col2 = st.columns(2)
         
         with col1:
-            mes_selecionado = st.selectbox("Mês", options=list(mes_options.keys()))
-            mes_num = mes_options[mes_selecionado]
-            
             if st.button("💾 Salvar Fatura", use_container_width=True):
                 if arquivo is not None:
                     if df is not None:
@@ -316,8 +303,6 @@ elif authentication_status:
                     st.warning("Por favor, faça upload de uma fatura primeiro.")
         
         with col2:
-            ano_selecionado = st.selectbox("Ano", options=list(range(2024, 2020, -1)))
-            
             if st.button("🗑️ Limpar Dados do Mês", use_container_width=True):
                 limpar_fatura(mes_num, ano_selecionado)
                 st.success(f"Dados de {mes_selecionado}/{ano_selecionado} removidos!")
