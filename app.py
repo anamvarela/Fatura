@@ -23,7 +23,6 @@ st.set_page_config(
     page_title="Análise Faturas Nubank",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
 
 # Carregar configurações de autenticação
@@ -32,11 +31,10 @@ with open('config.yaml') as file:
 
 # Criar o autenticador
 authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['preauthorized']
+    credentials=config['credentials'],
+    cookie_name=config['cookie']['name'],
+    key=config['cookie']['key'],
+    cookie_expiry_days=config['cookie']['expiry_days']
 )
 
 # Adicionar login

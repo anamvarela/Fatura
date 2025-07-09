@@ -22,9 +22,6 @@ def main():
                 'expiry_days': 30,
                 'key': 'some_signature_key',
                 'name': 'fatura_auth'
-            },
-            'preauthorized': {
-                'emails': []
             }
         }
     
@@ -49,12 +46,6 @@ def main():
             'name': name,
             'password': hashed_password
         }
-        
-        # Adicionar email à lista de preautorizados
-        if 'preauthorized' not in config:
-            config['preauthorized'] = {'emails': []}
-        if email not in config['preauthorized']['emails']:
-            config['preauthorized']['emails'].append(email)
         
         print(f"\nUsuário {username} configurado com sucesso!")
     
