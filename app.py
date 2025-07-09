@@ -143,15 +143,6 @@ elif authentication_status:
             index=2
         )
 
-    # Criar tabs
-    tab_atual, tab_parcelas, tab_gastos_fixos, tab_historico, tab_analise = st.tabs([
-        "📥 Fatura Atual",
-        "🔄 Parcelas Futuras",
-        "📌 Gastos Fixos",
-        "📈 Histórico",
-        "📊 Análise"
-    ])
-
     # Funções de processamento
     @st.cache_data(ttl=600)
     def processar_pdf(arquivo_pdf):
@@ -279,151 +270,385 @@ elif authentication_status:
         st.success('✅ Gasto fixo removido com sucesso!')
         st.experimental_rerun()
 
-    # Na aba Fatura Atual
-    with tab_atual:
-        st.header("Fatura Atual")
+    # Criar tabs
+    tab_inserir, tab_entradas, tab_analise, tab_parcelas, tab_fixos, tab_historico = st.tabs([
+        "📥 Inserir Fatura",
+        "💰 Entradas do Mês",
+        "📊 Análise",
+        "🔄 Parcelas Futuras",
+        "📌 Gastos Fixos",
+        "📈 Histórico"
+    ])
+
+    # Aba de Inserir Fatura
+    with tab_inserir:
+        st.subheader("Inserir Nova Fatura")
         
-        # Carregar faturas existentes
-        faturas = carregar_faturas()
+        # Upload do arquivo
+        arquivo = st.file_uploader("Faça upload da sua fatura (PDF)", type=['pdf'])
         
-        # Seleção de mês e ano
+        if arquivo is not None:
+            df = processar_pdf(arquivo)
+            if df is not None:
+                # Aplicar categorização inicial
+                df['categoria'] = df['descricao'].apply(classificar_transacao)
+
         col1, col2 = st.columns(2)
+        
         with col1:
             mes_selecionado = st.selectbox("Mês", options=list(mes_options.keys()))
             mes_num = mes_options[mes_selecionado]
+            
+            if st.button("💾 Salvar Fatura", use_container_width=True):
+                if arquivo is not None:
+                    if df is not None:
+                        try:
+                            fatura = {
+                                'mes': mes_num,
+                                'ano': ano_selecionado,
+                                'transacoes': df.to_dict('records')
+                            }
+                            historico = adicionar_fatura(fatura=fatura)
+                            st.success(f"Fatura de {mes_selecionado}/{ano_selecionado} salva com sucesso!")
+                        except Exception as e:
+                            st.error(f"Erro ao salvar fatura: {str(e)}")
+                else:
+                    st.warning("Por favor, faça upload de uma fatura primeiro.")
+        
         with col2:
             ano_selecionado = st.selectbox("Ano", options=list(range(2024, 2020, -1)))
+            
+            if st.button("🗑️ Limpar Dados do Mês", use_container_width=True):
+                limpar_fatura(mes_num, ano_selecionado)
+                st.success(f"Dados de {mes_selecionado}/{ano_selecionado} removidos!")
 
-        # Adicionar nova transação
-        st.subheader("Adicionar Transação")
+    # Na aba de Entradas do Mês
+    with tab_entradas:
+        st.header("💰 Entradas do Mês")
         
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            descricao = st.text_input("Descrição da transação")
-        with col2:
-            valor = st.number_input("Valor", min_value=0.0, step=0.01)
-        with col3:
-            categoria = st.selectbox(
-                "Categoria",
-                options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"]
-            )
-            is_fixo = st.checkbox("Gasto Fixo 📌")
-
-        if st.button("Adicionar Transação"):
-            # Encontrar ou criar fatura para o mês/ano selecionado
-            fatura = None
-            for f in faturas:
-                if f['mes'] == mes_num and f['ano'] == ano_selecionado:
-                    fatura = f
-                    break
+        # Formulário para adicionar entrada
+        with st.form("form_entrada"):
+            col1, col2, col3 = st.columns([2, 2, 1])
             
-            if fatura is None:
-                fatura = {
-                    'mes': mes_num,
-                    'ano': ano_selecionado,
-                    'transacoes': []
-                }
-                faturas.append(fatura)
+            with col1:
+                valor_entrada = st.number_input("Valor", min_value=0.0, format="%.2f")
             
-            # Adicionar nova transação
-            nova_transacao = {
-                'descricao': descricao,
-                'valor': valor,
-                'categoria': categoria,
-                'fixo': is_fixo
-            }
-            fatura['transacoes'].append(nova_transacao)
-            salvar_faturas(faturas)
-            st.success("Transação adicionada com sucesso!")
+            with col2:
+                descricao_entrada = st.text_input("Descrição")
+            
+            with col3:
+                tipo_entrada = st.selectbox(
+                    "Tipo",
+                    options=["Salário", "Freelance", "Outros"]
+                )
+            
+            if st.form_submit_button("Adicionar Entrada"):
+                if valor_entrada > 0 and descricao_entrada:
+                    adicionar_entrada(mes_num, ano_selecionado, valor_entrada, descricao_entrada, tipo_entrada)
+                    st.success("✓ Entrada adicionada com sucesso!")
+                else:
+                    st.error("Por favor, preencha todos os campos.")
 
-        # Mostrar transações do mês atual
-        st.subheader("Transações do Mês")
-        fatura_atual = None
-        for f in faturas:
-            if f['mes'] == mes_num and f['ano'] == ano_selecionado:
-                fatura_atual = f
-                break
-
-        if fatura_atual and fatura_atual['transacoes']:
-            for idx, transacao in enumerate(fatura_atual['transacoes']):
-                col1, col2, col3, col4, col5 = st.columns([3, 2, 2, 1, 1])
+        # Mostrar entradas existentes
+        entradas_existentes = obter_entradas(mes_num, ano_selecionado)
+        if entradas_existentes:
+            st.write("### Entradas Registradas")
+            for idx, entrada in enumerate(entradas_existentes):
+                col1, col2, col3, col4 = st.columns([1, 2, 1, 1])
                 with col1:
-                    nova_descricao = st.text_input(
-                        "Descrição",
-                        value=transacao['descricao'],
-                        key=f"desc_{idx}"
-                    )
+                    st.write(f"R$ {entrada['valor']:.2f}")
                 with col2:
-                    novo_valor = st.number_input(
-                        "Valor",
-                        value=float(transacao['valor']),
-                        key=f"val_{idx}"
-                    )
+                    st.write(entrada['descricao'])
                 with col3:
-                    nova_categoria = st.selectbox(
-                        "Categoria",
-                        options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"],
-                        key=f"cat_{idx}",
-                        index=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"].index(transacao['categoria'])
-                    )
+                    st.write(entrada['tipo'])
                 with col4:
-                    novo_fixo = st.checkbox(
-                        "📌",
-                        value=transacao.get('fixo', False),
-                        key=f"fix_{idx}"
-                    )
-                with col5:
-                    if st.button("🗑️", key=f"del_{idx}"):
-                        fatura_atual['transacoes'].pop(idx)
-                        salvar_faturas(faturas)
+                    if st.button("🗑️", key=f"del_entrada_{idx}"):
+                        remover_entrada(
+                            entrada['mes'],
+                            entrada['ano'],
+                            entrada['valor'],
+                            entrada['descricao'],
+                            entrada['tipo']
+                        )
                         st.rerun()
 
-                # Atualizar transação se houver mudanças
-                if (nova_descricao != transacao['descricao'] or
-                    novo_valor != transacao['valor'] or
-                    nova_categoria != transacao['categoria'] or
-                    novo_fixo != transacao.get('fixo', False)):
-                    
-                    fatura_atual['transacoes'][idx] = {
-                        'descricao': nova_descricao,
-                        'valor': novo_valor,
-                        'categoria': nova_categoria,
-                        'fixo': novo_fixo
-                    }
-                    salvar_faturas(faturas)
+            # Mostrar total
+            total_entradas = sum(e['valor'] for e in entradas_existentes)
+            st.metric("Total de Entradas", f"R$ {total_entradas:.2f}")
         else:
-            st.info("Nenhuma transação cadastrada para este mês.")
+            st.info("Nenhuma entrada registrada para este mês.")
 
-    # Na aba Parcelas Futuras
-    with tab_parcelas:
-        st.header("Parcelas Futuras")
-        # Mostrar apenas parcelas do mês atual
-        mes_atual = datetime.now().month
-        ano_atual = datetime.now().year
+    # Na aba de Análise
+    with tab_analise:
+        st.header("📊 Análise de Gastos")
         
-        parcelas_mes = []
+        # Carregar dados
+        dados = carregar_dados()
+        faturas = dados.get('faturas', [])
+        
+        # Filtrar fatura atual e anterior
+        fatura_atual = None
+        fatura_anterior = None
+        mes_anterior = mes_num - 1 if mes_num > 1 else 12
+        ano_anterior = ano_selecionado if mes_num > 1 else ano_selecionado - 1
+        
         for fatura in faturas:
-            for transacao in fatura['transacoes']:
-                if transacao.get('fixo', False):
-                    parcelas_mes.append({
-                        'descricao': transacao['descricao'],
-                        'valor': transacao['valor'],
-                        'categoria': transacao['categoria'],
-                        'data': f"{list(mes_options.keys())[mes_atual-1]}/{ano_atual}"
+            if fatura['mes'] == mes_num and fatura['ano'] == ano_selecionado:
+                fatura_atual = fatura
+            elif fatura['mes'] == mes_anterior and fatura['ano'] == ano_anterior:
+                fatura_anterior = fatura
+        
+        if not fatura_atual:
+            st.warning("Nenhuma fatura encontrada para este mês.")
+            st.stop()
+        
+        # Calcular métricas
+        total_atual = sum(t['valor'] for t in fatura_atual['transacoes'])
+        total_anterior = sum(t['valor'] for t in fatura_anterior['transacoes']) if fatura_anterior else 0
+        
+        # Obter entradas do mês
+        entradas_mes = obter_entradas(mes_num, ano_selecionado)
+        total_entradas = sum(e['valor'] for e in entradas_mes)
+        
+        # Calcular variação
+        if total_anterior > 0:
+            variacao = ((total_atual - total_anterior) / total_anterior) * 100
+            variacao_texto = f"{'+' if variacao > 0 else ''}{variacao:.1f}%"
+        else:
+            variacao_texto = "N/A"
+        
+        # Mostrar métricas no topo
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric(
+                "Total de Gastos",
+                formatar_valor(total_atual)
+            )
+        
+        with col2:
+            if total_entradas > 0:
+                percentual_gasto = (total_atual / total_entradas) * 100
+                st.metric(
+                    "Gastos / Entradas",
+                    f"{percentual_gasto:.1f}%"
+                )
+            else:
+                st.metric("Gastos / Entradas", "N/A")
+        
+        with col3:
+            st.metric(
+                "Variação do Mês Anterior",
+                variacao_texto,
+                delta=f"{formatar_valor(total_atual - total_anterior)}" if total_anterior > 0 else None
+            )
+        
+        # Preparar dados para comparação mensal por categoria
+        categorias = ["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"]
+        dados_comparacao = []
+        
+        # Pegar os dois meses mais recentes
+        faturas_ordenadas = sorted(faturas, key=lambda x: (int(x['ano']), int(x['mes'])), reverse=True)[:2]
+        if len(faturas_ordenadas) >= 2:
+            for categoria in categorias:
+                valores = []
+                meses = []
+                for fatura in faturas_ordenadas:
+                    total_categoria = sum(t['valor'] for t in fatura['transacoes'] if t['categoria'] == categoria)
+                    valores.append(total_categoria)
+                    meses.append(f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}")
+                
+                for mes, valor in zip(meses, valores):
+                    dados_comparacao.append({
+                        'categoria': categoria,
+                        'mes': mes,
+                        'valor': valor
                     })
         
+            # Criar gráfico de comparação
+            df_comparacao = pd.DataFrame(dados_comparacao)
+            fig_comparacao = go.Figure()
+            
+            for mes in df_comparacao['mes'].unique():
+                dados_mes = df_comparacao[df_comparacao['mes'] == mes]
+                fig_comparacao.add_trace(go.Bar(
+                    name=mes,
+                    x=dados_mes['categoria'],
+                    y=dados_mes['valor'],
+                    text=dados_mes['valor'].apply(lambda x: f'R$ {x:.2f}'),
+                    textposition='auto',
+                ))
+            
+            fig_comparacao.update_layout(
+                title='Comparação de Gastos por Categoria',
+                xaxis_title='Categoria',
+                yaxis_title='Valor (R$)',
+                barmode='group',
+                showlegend=True,
+                height=500
+            )
+            
+            st.plotly_chart(fig_comparacao, use_container_width=True)
+        
+        # Mostrar detalhamento por categoria
+        st.write("### Detalhamento por Categoria")
+        df = pd.DataFrame(fatura_atual['transacoes'])
+        
+        # Atualizar categorias com as já salvas
+        for i, transacao in enumerate(fatura_atual['transacoes']):
+            if 'categoria' in transacao:
+                df.loc[i, 'categoria'] = transacao['categoria']
+            else:
+                df.loc[i, 'categoria'] = classificar_transacao(transacao['descricao'])
+        
+        # Calcular totais por categoria
+        totais_categoria = df.groupby('categoria')['valor'].sum().sort_values(ascending=False)
+        
+        # Mostrar transações por categoria
+        for categoria, total in totais_categoria.items():
+            with st.expander(f"📁 {categoria} - {formatar_valor(total)} ({(total/total_atual*100):.1f}%) - {len(df[df['categoria'] == categoria])} transações"):
+                gastos_categoria = df[df['categoria'] == categoria].sort_values('valor', ascending=False)
+                
+                # Criar container para reduzir espaçamento
+                with st.container():
+                    for idx, transacao in gastos_categoria.iterrows():
+                        # Layout mais compacto
+                        cols = st.columns([1, 3, 2, 0.5, 0.5])
+                        
+                        with cols[0]:
+                            st.write(transacao['data'])
+                        
+                        with cols[1]:
+                            st.write(transacao['descricao'])
+                        
+                        with cols[2]:
+                            st.write(formatar_valor(transacao['valor']))
+                        
+                        with cols[3]:
+                            if any(g['descricao'] == transacao['descricao'] and abs(g['valor'] - transacao['valor']) < 0.01 for g in dados.get('gastos_fixos', [])):
+                                st.write("📌")
+                        
+                        with cols[4]:
+                            if st.button("✏️", key=f"edit_{idx}"):
+                                st.session_state[f'editing_{idx}'] = True
+                        
+                        # Se o botão de edição foi clicado, mostrar o formulário
+                        if st.session_state.get(f'editing_{idx}', False):
+                            with st.form(f"form_transacao_{idx}", clear_on_submit=True):
+                                nova_categoria = st.selectbox(
+                                    "Categoria",
+                                    options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"],
+                                    key=f"cat_{idx}",
+                                    index=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"].index(transacao['categoria'])
+                                )
+                                
+                                is_fixo = st.checkbox("Marcar como gasto fixo", key=f"fix_{idx}")
+                                
+                                col1, col2 = st.columns([1, 1])
+                                with col1:
+                                    if st.form_submit_button("💾 Salvar"):
+                                        try:
+                                            # Atualizar categoria na transação
+                                            fatura_atual['transacoes'][idx]['categoria'] = nova_categoria
+                                            
+                                            # Atualizar gastos fixos
+                                            if is_fixo:
+                                                gasto_fixo = {
+                                                    'descricao': transacao['descricao'],
+                                                    'valor': transacao['valor'],
+                                                    'categoria': nova_categoria,
+                                                    'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                                }
+                                                if not any(g['descricao'] == transacao['descricao'] and abs(g['valor'] - transacao['valor']) < 0.01 for g in dados['gastos_fixos']):
+                                                    dados['gastos_fixos'].append(gasto_fixo)
+                                            else:
+                                                dados['gastos_fixos'] = [
+                                                    g for g in dados['gastos_fixos']
+                                                    if not (g['descricao'] == transacao['descricao'] and abs(g['valor'] - transacao['valor']) < 0.01)
+                                                ]
+                                            
+                                            # Atualizar fatura no histórico
+                                            for i, f in enumerate(dados['faturas']):
+                                                if f['mes'] == mes_num and f['ano'] == ano_selecionado:
+                                                    dados['faturas'][i] = fatura_atual
+                                                    break
+                                            
+                                            # Salvar todas as alterações
+                                            salvar_dados(dados)
+                                            st.session_state[f'editing_{idx}'] = False
+                                            st.success("✓ Alterações salvas!")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Erro ao salvar alterações: {str(e)}")
+                            
+                                with col2:
+                                    if st.form_submit_button("❌ Cancelar"):
+                                        st.session_state[f'editing_{idx}'] = False
+                                        st.rerun()
+                        
+                        st.markdown("---")
+
+    # Na aba de Parcelas Futuras
+    with tab_parcelas:
+        st.header("🔄 Parcelas Futuras")
+        
+        # Formulário para adicionar nova compra parcelada
+        with st.form("form_parcela"):
+            col1, col2, col3 = st.columns([2, 1, 1])
+            
+            with col1:
+                descricao_parcela = st.text_input("Descrição da Compra")
+            
+            with col2:
+                valor_total = st.number_input("Valor Total", min_value=0.0, format="%.2f")
+            
+            with col3:
+                num_parcelas = st.number_input("Número de Parcelas", min_value=1, value=1)
+            
+            data_inicio = st.date_input(
+                "Data da Primeira Parcela",
+                value=datetime.now(),
+                min_value=datetime(2020, 1, 1),
+                max_value=datetime(2030, 12, 31)
+            )
+            
+            if st.form_submit_button("Adicionar Compra Parcelada"):
+                if valor_total > 0 and descricao_parcela and num_parcelas > 0:
+                    adicionar_parcela(descricao_parcela, valor_total, num_parcelas, data_inicio)
+                    st.success("✓ Compra parcelada adicionada com sucesso!")
+                else:
+                    st.error("Por favor, preencha todos os campos.")
+        
+        # Mostrar parcelas do mês atual
+        st.subheader(f"Parcelas de {mes_selecionado}/{ano_selecionado}")
+        parcelas_mes = obter_parcelas_mes(mes_num, ano_selecionado)
+        
         if parcelas_mes:
-            df_parcelas = pd.DataFrame(parcelas_mes)
-            st.dataframe(df_parcelas)
+            total_mes = sum(p['valor_parcela'] for p in parcelas_mes)
+            st.metric("Total de Parcelas do Mês", formatar_valor(total_mes))
+            
+            for parcela in parcelas_mes:
+                col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+                with col1:
+                    st.write(parcela['descricao'])
+                with col2:
+                    st.write(formatar_valor(parcela['valor_parcela']))
+                with col3:
+                    st.write(f"Parcela {parcela['parcela_atual']}/{parcela['total_parcelas']}")
+                with col4:
+                    if st.button("🗑️", key=f"del_parcela_{parcela['descricao']}"):
+                        remover_parcela(parcela['descricao'], parcela['valor_total'])
+                        st.rerun()
         else:
             st.info("Nenhuma parcela para este mês.")
 
     # Na aba de Gastos Fixos
-    with tab_gastos_fixos:
-        st.header("Gastos Fixos")
+    with tab_fixos:
+        st.header("📌 Gastos Fixos")
         
-        # Carregar faturas
-        faturas = carregar_faturas()
+        # Carregar dados
+        dados = carregar_dados()
+        gastos_fixos = dados.get('gastos_fixos', [])
         
         # Seção para adicionar novo gasto fixo
         st.subheader("Adicionar Gasto Fixo Mensal")
@@ -439,46 +664,50 @@ elif authentication_status:
             )
         
         if st.button("Adicionar Gasto Fixo"):
-            gastos_fixos = carregar_gastos_fixos()
             novo_gasto = {
-                "descricao": descricao,
-                "valor": valor,
-                "categoria": categoria
+                'descricao': descricao,
+                'valor': valor,
+                'categoria': categoria,
+                'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
-            gastos_fixos.append(novo_gasto)
-            salvar_gastos_fixos(gastos_fixos)
-            st.success("Gasto fixo adicionado com sucesso!")
-            
-        # Mostrar tabela de gastos fixos mensais
-        st.subheader("Gastos Fixos Cadastrados")
-        gastos_fixos = carregar_gastos_fixos()
-        if gastos_fixos:
-            df_fixos = pd.DataFrame(gastos_fixos)
-            st.dataframe(df_fixos)
-            
-        # Mostrar transações marcadas como fixas
-        st.subheader("Transações Marcadas como Fixas")
-        transacoes_fixas = []
-        for fatura in faturas:
-            for transacao in fatura['transacoes']:
-                if transacao.get('fixo', False):
-                    transacao_com_data = {
-                        'data': f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}",
-                        'descricao': transacao['descricao'],
-                        'valor': transacao['valor'],
-                        'categoria': transacao['categoria']
-                    }
-                    transacoes_fixas.append(transacao_com_data)
+            dados['gastos_fixos'].append(novo_gasto)
+            salvar_dados(dados)
+            st.success("✓ Gasto fixo adicionado com sucesso!")
         
-        if transacoes_fixas:
-            df_transacoes_fixas = pd.DataFrame(transacoes_fixas)
-            st.dataframe(df_transacoes_fixas)
+        # Mostrar gastos fixos existentes
+        if gastos_fixos:
+            st.subheader("Gastos Fixos Cadastrados")
+            total_fixo = sum(g['valor'] for g in gastos_fixos)
+            st.metric("Total Mensal", formatar_valor(total_fixo))
+            
+            for idx, gasto in enumerate(gastos_fixos):
+                col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+                with col1:
+                    st.write(gasto['descricao'])
+                with col2:
+                    st.write(formatar_valor(gasto['valor']))
+                with col3:
+                    st.write(gasto['categoria'])
+                with col4:
+                    if st.button("🗑️", key=f"del_fixo_{idx}"):
+                        dados['gastos_fixos'].remove(gasto)
+                        salvar_dados(dados)
+                        st.rerun()
+                st.markdown("---")
         else:
-            st.info("Nenhuma transação marcada como fixa.")
+            st.info("Nenhum gasto fixo cadastrado.")
 
     # Na aba de Histórico
     with tab_historico:
-        st.header("Histórico")
+        st.header("📈 Histórico de Gastos")
+        
+        # Obter dados históricos
+        dados = carregar_dados()
+        faturas = dados.get('faturas', [])
+        
+        if not faturas:
+            st.info("Nenhum dado histórico encontrado.")
+            st.stop()
         
         # Tabela de totais mensais
         st.subheader("Totais Mensais")
@@ -507,81 +736,23 @@ elif authentication_status:
                 'total': float(total_gasto)
             })
         
-        if evolucao_data:
-            # Criar gráfico de evolução
-            df_evolucao = pd.DataFrame(evolucao_data)
-            fig_evolucao = go.Figure()
-            fig_evolucao.add_trace(go.Scatter(
-                x=[f"{list(mes_options.keys())[int(row['mes'])-1]}/{int(row['ano'])}" for _, row in df_evolucao.iterrows()],
-                y=df_evolucao['total'],
-                mode='lines+markers',
-                name='Total Gasto',
-                line=dict(color='#4B0082', width=2),
-                marker=dict(size=8)
-            ))
-            
-            fig_evolucao.update_layout(
-                title="Evolução dos Gastos",
-                xaxis_title="Mês",
-                yaxis_title="Valor Total (R$)",
-                showlegend=False
-            )
-            
-            st.plotly_chart(fig_evolucao, use_container_width=True)
-
-    # Na aba de Análise
-    with tab_analise:
-        st.header("Análise")
+        # Criar gráfico de evolução
+        df_evolucao = pd.DataFrame(evolucao_data)
+        fig_evolucao = go.Figure()
+        fig_evolucao.add_trace(go.Scatter(
+            x=[f"{list(mes_options.keys())[int(row['mes'])-1]}/{int(row['ano'])}" for _, row in df_evolucao.iterrows()],
+            y=df_evolucao['total'],
+            mode='lines+markers',
+            name='Total Gasto',
+            line=dict(color='#4B0082', width=2),
+            marker=dict(size=8)
+        ))
         
-        # Carregar faturas
-        faturas = carregar_faturas()
+        fig_evolucao.update_layout(
+            title="Evolução dos Gastos Mensais",
+            xaxis_title="Mês/Ano",
+            yaxis_title="Valor Total (R$)",
+            showlegend=True
+        )
         
-        if faturas:
-            # Preparar dados para comparação mensal por categoria
-            categorias = ["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"]
-            dados_comparacao = []
-            
-            # Pegar os dois meses mais recentes
-            faturas_ordenadas = sorted(faturas, key=lambda x: (int(x['ano']), int(x['mes'])), reverse=True)[:2]
-            if len(faturas_ordenadas) >= 2:
-                for categoria in categorias:
-                    valores = []
-                    meses = []
-                    for fatura in faturas_ordenadas:
-                        total_categoria = sum(t['valor'] for t in fatura['transacoes'] if t['categoria'] == categoria)
-                        valores.append(total_categoria)
-                        meses.append(f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}")
-                    
-                    for mes, valor in zip(meses, valores):
-                        dados_comparacao.append({
-                            'categoria': categoria,
-                            'mes': mes,
-                            'valor': valor
-                        })
-                
-                # Criar gráfico de comparação
-                df_comparacao = pd.DataFrame(dados_comparacao)
-                fig_comparacao = go.Figure()
-                
-                for mes in df_comparacao['mes'].unique():
-                    dados_mes = df_comparacao[df_comparacao['mes'] == mes]
-                    fig_comparacao.add_trace(go.Bar(
-                        name=mes,
-                        x=dados_mes['categoria'],
-                        y=dados_mes['valor'],
-                        text=dados_mes['valor'].apply(lambda x: f'R$ {x:.2f}'),
-                        textposition='auto',
-                    ))
-                
-                fig_comparacao.update_layout(
-                    title='Comparação de Gastos por Categoria',
-                    xaxis_title='Categoria',
-                    yaxis_title='Valor (R$)',
-                    barmode='group',
-                    showlegend=True,
-                    height=500
-                )
-                
-                st.plotly_chart(fig_comparacao, use_container_width=True)
-        else:
-            st.info("Nenhuma fatura cadastrada para análise.") 
+        st.plotly_chart(fig_evolucao, use_container_width=True) 
