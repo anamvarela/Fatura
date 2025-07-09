@@ -143,14 +143,13 @@ elif authentication_status:
             index=2
         )
 
-    # Criar abas
-    tab_inserir, tab_entradas, tab_analise, tab_parcelas, tab_fixos, tab_historico = st.tabs([
-        "📥 Inserir Fatura",
-        "💰 Entradas do Mês",
-        "📊 Análise",
-        "🔄 Parcelas Futuras",
-        "📌 Gastos Fixos",
-        "📈 Histórico"
+    # Criar tabs
+    tab_atual, tab_parcelas, tab_gastos_fixos, tab_historico, tab_analise = st.tabs([
+        "Fatura Atual",
+        "Parcelas Futuras",
+        "Gastos Fixos",
+        "Histórico",
+        "Análise"
     ])
 
     # Funções de processamento
@@ -281,7 +280,7 @@ elif authentication_status:
         st.experimental_rerun()
 
     # Aba de Inserir Fatura
-    with tab_inserir:
+    with tab_atual:
         st.subheader("Inserir Nova Fatura")
         
         # Upload do arquivo
@@ -430,8 +429,11 @@ elif authentication_status:
             st.info("Nenhuma parcela para este mês.")
 
     # Na aba de Gastos Fixos
-    with tab_fixos:
-        st.header("📌 Gastos Fixos")
+    with tab_gastos_fixos:
+        st.header("Gastos Fixos")
+        
+        # Carregar faturas
+        faturas = carregar_faturas()
         
         # Seção para adicionar novo gasto fixo
         st.subheader("Adicionar Gasto Fixo Mensal")
