@@ -3,46 +3,57 @@ import pandas as pd
 import pdfplumber
 import plotly.express as px
 import re
+import os
 
 # Configuração da página
 st.set_page_config(
     page_title="Análise de Fatura Nubank",
     page_icon="💳",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# Título da aplicação
-st.title("📊 Analisador de Faturas Nubank")
-
+# Configurações de cache
+@st.cache_data(ttl=600)
 def processar_pdf(arquivo_pdf):
     """Processa o arquivo PDF da fatura do Nubank"""
-    texto_completo = []
-    with pdfplumber.open(arquivo_pdf) as pdf:
-        for pagina in pdf.pages:
-            texto_completo.append(pagina.extract_text())
-    
-    texto_completo = '\n'.join(texto_completo)
-    linhas = texto_completo.split('\n')
-    
-    transacoes = []
-    for linha in linhas:
-        if re.search(r'\d{2} [A-Z]{3}', linha):
-            try:
-                data = re.search(r'\d{2} [A-Z]{3}', linha).group()
-                valor = re.search(r'R\$ \d+[.,]\d{2}', linha)
-                if valor:
-                    valor = float(valor.group().replace('R$ ', '').replace('.', '').replace(',', '.'))
-                    descricao = re.sub(r'\d{2} [A-Z]{3}|R\$ \d+[.,]\d{2}', '', linha).strip()
-                    transacoes.append({
-                        'Data': data,
-                        'Descrição': descricao,
-                        'Valor': valor
-                    })
-            except:
-                continue
-    
-    return pd.DataFrame(transacoes)
+    try:
+        texto_completo = []
+        with pdfplumber.open(arquivo_pdf) as pdf:
+            for pagina in pdf.pages:
+                texto_completo.append(pagina.extract_text())
+        
+        texto_completo = '\n'.join(texto_completo)
+        linhas = texto_completo.split('\n')
+        
+        transacoes = []
+        for linha in linhas:
+            if re.search(r'\d{2} [A-Z]{3}', linha):
+                try:
+                    data = re.search(r'\d{2} [A-Z]{3}', linha).group()
+                    valor = re.search(r'R\$ \d+[.,]\d{2}', linha)
+                    if valor:
+                        valor = float(valor.group().replace('R$ ', '').replace('.', '').replace(',', '.'))
+                        descricao = re.sub(r'\d{2} [A-Z]{3}|R\$ \d+[.,]\d{2}', '', linha).strip()
+                        transacoes.append({
+                            'Data': data,
+                            'Descrição': descricao,
+                            'Valor': valor
+                        })
+                except Exception as e:
+                    st.warning(f"Erro ao processar linha: {linha}")
+                    continue
+        
+        if not transacoes:
+            st.error("Não foi possível encontrar transações no arquivo. Certifique-se de que este é um arquivo de fatura do Nubank.")
+            return None
+            
+        return pd.DataFrame(transacoes)
+    except Exception as e:
+        st.error(f"Erro ao processar o PDF: {str(e)}")
+        return None
 
+@st.cache_data
 def classificar_transacao(descricao):
     """Classifica a transação em categorias"""
     descricao = descricao.lower()
@@ -83,13 +94,25 @@ def classificar_transacao(descricao):
             return categoria
     return 'Outros'
 
+# Título da aplicação
+st.title("📊 Analisador de Faturas Nubank")
+
+# Informações sobre o uso
+st.markdown("""
+### Como usar:
+1. Faça upload da sua fatura do Nubank em PDF
+2. Veja o resumo dos seus gastos por categoria
+3. Clique em cada categoria para ver os detalhes
+""")
+
 # Upload do arquivo
-arquivo = st.file_uploader("Faça upload da sua fatura (PDF ou CSV)", type=['pdf', 'csv'])
+arquivo = st.file_uploader("Faça upload da sua fatura (PDF)", type=['pdf'])
 
 if arquivo is not None:
-    try:
-        if arquivo.name.endswith('.pdf'):
-            df = processar_pdf(arquivo)
+    df = processar_pdf(arquivo)
+    
+    if df is not None:
+        try:
             df['Categoria'] = df['Descrição'].apply(classificar_transacao)
             
             # Calcular o total gasto
@@ -136,10 +159,11 @@ if arquivo is not None:
             # Mostrar total geral
             st.markdown(f"**TOTAL: R$ {total_gasto:.2f}**")
             
-        else:
-            st.error("Por favor, faça upload de um arquivo PDF da fatura do Nubank")
-            
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao processar o arquivo: {str(e)}")
+        except Exception as e:
+            st.error(f"Ocorreu um erro ao analisar os dados: {str(e)}")
 else:
-    st.info("👆 Faça o upload da sua fatura para começar a análise!") 
+    st.info("👆 Faça o upload da sua fatura para começar a análise!")
+
+# Adicionar footer
+st.markdown("---")
+st.markdown("Desenvolvido para análise de faturas do Nubank 💜") 
