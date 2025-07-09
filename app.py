@@ -185,13 +185,10 @@ elif authentication_status:
             fatura = {
                 'mes': mes_num,
                 'ano': ano_selecionado,
-                'transacoes': transacoes,
-                'total': sum(t['valor'] for t in transacoes)
+                'transacoes': transacoes
             }
             
-            # Adicionar fatura ao histórico
-            adicionar_fatura(fatura)
-            
+            # Retornar DataFrame para exibição
             return pd.DataFrame(transacoes)
         except Exception as e:
             st.error(f"Erro ao processar o PDF: {str(e)}")
@@ -282,7 +279,12 @@ elif authentication_status:
                     if df is not None:
                         try:
                             mes_num = mes_options[mes_selecionado]
-                            historico = adicionar_fatura(df, mes_num, ano_selecionado)
+                            fatura = {
+                                'mes': mes_num,
+                                'ano': ano_selecionado,
+                                'transacoes': df.to_dict('records')
+                            }
+                            historico = adicionar_fatura(fatura=fatura)
                             st.success(f"Fatura de {mes_selecionado}/{ano_selecionado} salva com sucesso!")
                         except Exception as e:
                             st.error(f"Erro ao salvar fatura: {str(e)}")
