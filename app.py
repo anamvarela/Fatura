@@ -366,7 +366,7 @@ elif authentication_status:
         # Filtrar fatura do mês atual
         fatura_atual = None
         for fatura in faturas:
-            if fatura['mes'] == mes_num and f['ano'] == ano_selecionado:
+            if fatura['mes'] == mes_num and fatura['ano'] == ano_selecionado:
                 fatura_atual = fatura
                 break
         
