@@ -27,6 +27,26 @@ from pathlib import Path
 import time
 import os
 
+def carregar_faturas():
+    if os.path.exists('faturas.json'):
+        with open('faturas.json', 'r') as f:
+            return json.load(f)
+    return []
+
+def salvar_faturas(faturas):
+    with open('faturas.json', 'w') as f:
+        json.dump(faturas, f, indent=4)
+
+def carregar_gastos_fixos():
+    if os.path.exists('gastos_fixos.json'):
+        with open('gastos_fixos.json', 'r') as f:
+            return json.load(f)
+    return []
+
+def salvar_gastos_fixos(gastos_fixos):
+    with open('gastos_fixos.json', 'w') as f:
+        json.dump(gastos_fixos, f, indent=4)
+
 # Configuração da página
 st.set_page_config(
     page_title="Análise Faturas Nubank",
