@@ -192,7 +192,7 @@ elif authentication_status:
             st.error(f"Erro ao processar o PDF: {str(e)}")
             return None
 
-    # Função para classificar transações (mantém a mesma)
+    # Função para classificar transações
     @st.cache_data
     def classificar_transacao(descricao):
         """Classifica a transação em categorias"""
@@ -206,60 +206,31 @@ elif authentication_status:
                 'ferro e farinha', 'eleninha', 'buddario'
             ],
             'Transporte': [
-                'uber', '99', 'taxi', 'combustível', 'posto', 'estacionamento',
-                'transfer'
+                'uber', '99', 'taxi', 'combustivel', 'estacionamento', 'pedágio',
+                'metro', 'brt', 'van', 'onibus', 'mobilidade', 'posto', 'gasolina'
             ],
             'Entretenimento': [
-                'netflix', 'spotify', 'cinema', 'teatro', 'show', 'ingresso',
-                'kinoplex', 'apple.com', 'google play', 'playstation',
-                'xbox', 'steam', 'battle.net', 'origin', 'ubisoft'
+                'cinema', 'teatro', 'show', 'netflix', 'spotify', 'prime',
+                'ingresso', 'livraria', 'livros', 'jogos', 'game', 'steam',
+                'playstation', 'xbox', 'nintendo', 'hbo', 'disney'
             ],
             'Self Care': [
-                'farmácia', 'hospital', 'médico', 'consulta', 'clínica',
-                'laboratório', 'exame', 'wellhub', 'espaco laser', 'espaço laser',
-                'drogasil', 'venancio', 'pacheco', 'raia', 'suaacademia'
+                'academia', 'farmacia', 'drogaria', 'pacheco', 'salao',
+                'cabelereiro', 'spa', 'massagem', 'medico', 'dentista',
+                'terapia', 'psicolog', 'nutri', 'personal', 'pilates',
+                'yoga', 'crossfit'
             ],
             'Compras': [
-                'shopping', 'loja', 'magazine', 'americanas', 'amazon',
-                'vipeconceito', 'havaianas', 'energia', 'água', 'internet', 
-                'telefone', 'celular', 'parcela', 'pagamento', 'mercado livre',
-                'voah', 'track field', 'sk acessorios'
+                'amazon', 'americanas', 'magalu', 'mercado livre', 'shopee',
+                'aliexpress', 'shein', 'renner', 'riachuelo', 'cea', 'zara',
+                'nike', 'adidas', 'puma', 'centauro', 'decathlon', 'dafiti',
+                'netshoes', 'natura', 'avon', 'boticario', 'sephora'
             ]
         }
         
-        # Casos especiais primeiro
-        descricao_lower = descricao.lower()
-        if 'track field' in descricao_lower:
-            return 'Compras'
-        if 'absurda confeitaria' in descricao_lower:
-            return 'Alimentação'
-        if 'mercadolivre' in descricao_lower:
-            return 'Compras'
-        if 'buddario' in descricao_lower:
-            return 'Alimentação'
-        if 'suaacademia' in descricao_lower:
-            return 'Self Care'
-        if 'sk acessorios' in descricao_lower:
-            return 'Compras'
-        
-        # Verificar cada categoria
         for categoria, palavras_chave in categorias.items():
-            if any(palavra in descricao_lower for palavra in palavras_chave):
+            if any(palavra in descricao for palavra in palavras_chave):
                 return categoria
-                
-        # Se não encontrou em nenhuma categoria, verificar palavras parciais
-        palavras_descricao = descricao_lower.split()
-        for palavra in palavras_descricao:
-            # Alimentação
-            if any(termo in palavra for termo in ['rest', 'cafe', 'bar', 'food']):
-                return 'Alimentação'
-            # Self Care
-            if any(termo in palavra for termo in ['farm', 'drog', 'med', 'spa']):
-                return 'Self Care'
-            # Compras
-            if any(termo in palavra for termo in ['shop', 'store', 'loja', 'pag']):
-                return 'Compras'
-        
         return 'Outros'
 
     # Função auxiliar para formatar valores
@@ -296,7 +267,7 @@ elif authentication_status:
             df = processar_pdf(arquivo)
             if df is not None:
                 # Aplicar categorização inicial
-                df['Categoria'] = df['Descrição'].apply(classificar_transacao)
+                df['categoria'] = df['descricao'].apply(classificar_transacao)
     
         col1, col2 = st.columns(2)
         
