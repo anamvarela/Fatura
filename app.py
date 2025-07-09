@@ -474,7 +474,7 @@ elif authentication_status:
                     name=mes,
                     x=dados_mes['categoria'],
                     y=dados_mes['valor'],
-                    text=dados_mes['valor'].apply(lambda x: f'R$ {x:.2f}'),
+                    text=dados_mes['valor'].apply(lambda x: formatar_valor(x)),
                     textposition='auto',
                     marker_color=cores[i]
                 ))
@@ -488,7 +488,11 @@ elif authentication_status:
                 height=500,
                 plot_bgcolor='white',
                 paper_bgcolor='white',
-                font=dict(color='#4B0082')
+                font=dict(color='#4B0082'),
+                yaxis=dict(
+                    tickformat=',.0f',
+                    tickprefix='R$ '
+                )
             )
             
             st.plotly_chart(fig_comparacao, use_container_width=True)
@@ -777,7 +781,12 @@ elif authentication_status:
             height=400,
             plot_bgcolor='white',
             paper_bgcolor='white',
-            font=dict(color='#4B0082')
+            font=dict(color='#4B0082'),
+            yaxis=dict(
+                range=[4000, 10000],
+                tickformat=',.0f',
+                tickprefix='R$ '
+            )
         )
         
         st.plotly_chart(fig, use_container_width=True)
