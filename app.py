@@ -425,16 +425,16 @@ elif authentication_status:
         for fatura in sorted(faturas, key=lambda x: (x['ano'], x['mes'])):
             total_gasto = sum(t['valor'] for t in fatura['transacoes'])
             evolucao_data.append({
-                'mes': fatura['mes'],
-                'ano': fatura['ano'],
-                'total': total_gasto
+                'mes': int(fatura['mes']),
+                'ano': int(fatura['ano']),
+                'total': float(total_gasto)
             })
         
         # Criar gráfico de evolução
         df_evolucao = pd.DataFrame(evolucao_data)
         fig_evolucao = go.Figure()
         fig_evolucao.add_trace(go.Scatter(
-            x=[f"{list(mes_options.keys())[row['mes']-1]}/{row['ano']}" for _, row in df_evolucao.iterrows()],
+            x=[f"{list(mes_options.keys())[int(row['mes'])-1]}/{int(row['ano'])}" for _, row in df_evolucao.iterrows()],
             y=df_evolucao['total'],
             mode='lines+markers',
             name='Total Gasto',
@@ -522,14 +522,14 @@ elif authentication_status:
             if fatura['ano'] == ano_selecionado or (fatura['ano'] == ano_selecionado - 1 and fatura['mes'] >= mes_num):
                 total = sum(t['valor'] for t in fatura['transacoes'])
                 meses_comparacao.append({
-                    'mes': fatura['mes'],
-                    'ano': fatura['ano'],
-                    'total': total
+                    'mes': int(fatura['mes']),
+                    'ano': int(fatura['ano']),
+                    'total': float(total)
                 })
         
         # Criar gráfico de comparação
         df_comparacao = pd.DataFrame(meses_comparacao)
-        df_comparacao['mes_nome'] = df_comparacao['mes'].apply(lambda x: list(mes_options.keys())[x-1])
+        df_comparacao['mes_nome'] = df_comparacao['mes'].apply(lambda x: list(mes_options.keys())[int(x)-1])
         
         fig_comparacao = go.Figure()
         
