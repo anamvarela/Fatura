@@ -333,7 +333,7 @@ with tab_entradas:
         if st.form_submit_button("➕ Adicionar Entrada", use_container_width=True):
             if adicionar_entrada(valor, descricao, tipo):
                 st.success("Entrada adicionada!")
-                st.rerun()
+                st.experimental_rerun()
             else:
                 st.error("Por favor, preencha o valor e a descrição.")
     
@@ -421,7 +421,7 @@ with tab_entradas:
             with col4:
                 if st.button("🗑️", key=f"del_{idx}", help="Excluir entrada"):
                     remover_entrada(idx)
-                    st.rerun()
+                    st.experimental_rerun()
             st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
@@ -591,12 +591,12 @@ with tab_analise:
                                             'categoria': nova_categoria if st.session_state[edit_key] else categoria
                                         })
                                         st.toast('✅ Gasto adicionado aos gastos fixos!', icon='✅')
-                                        st.rerun()
+                                        st.experimental_rerun()
                                     else:
                                         # Remover dos gastos fixos
                                         remover_gasto_fixo(transacao['Descrição'], float(transacao['Valor']))
                                         st.toast('ℹ️ Gasto removido dos gastos fixos', icon='ℹ️')
-                                        st.rerun()
+                                        st.experimental_rerun()
                             else:
                                 # Mostrar ícone se for gasto fixo
                                 if is_gasto_fixo:
@@ -609,7 +609,7 @@ with tab_analise:
                                 # Mostrar botão de editar
                                 if st.button("✏️", key=f"btn_{transacao['Data']}_{transacao['Valor']}_{transacao['Descrição']}"):
                                     st.session_state[edit_key] = True
-                                    st.rerun()
+                                    st.experimental_rerun()
                             else:
                                 # Botão de salvar
                                 if st.button("💾", key=f"save_{transacao['Data']}_{transacao['Valor']}_{transacao['Descrição']}"):
@@ -652,7 +652,7 @@ with tab_analise:
                                     # Limpar estado de edição
                                     st.session_state[edit_key] = False
                                     st.toast('✅ Alterações salvas com sucesso!', icon='✅')
-                                    st.rerun()
+                                    st.experimental_rerun()
                 
         # Gráficos
         st.subheader("Visualizações")
@@ -826,7 +826,7 @@ with tab_fixos:
                 }
                 adicionar_gasto_fixo(novo_gasto)
                 st.toast('✅ Gasto fixo adicionado com sucesso!', icon='✅')
-                st.rerun()
+                st.experimental_rerun()
     
     st.markdown("---")
     
@@ -928,7 +928,7 @@ with tab_fixos:
                         valor_float = float(row['Valor'].replace('R$ ', '').replace('.', '').replace(',', '.'))
                         remover_gasto_fixo(row['Descrição'], valor_float)
                         st.toast('✅ Gasto fixo removido com sucesso!', icon='✅')
-                        st.rerun()
+                        st.experimental_rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
             
             st.markdown('</div>', unsafe_allow_html=True)
