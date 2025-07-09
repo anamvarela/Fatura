@@ -253,6 +253,25 @@ elif authentication_status:
         st.experimental_rerun()
 
     # Criar tabs
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        mes_selecionado = st.selectbox(
+            "Selecione o Mês",
+            options=list(mes_options.keys()),
+            index=datetime.now().month - 1
+        )
+        # Definir mes_num logo após a seleção
+        mes_num = mes_options[mes_selecionado]
+
+    with col2:
+        ano_atual = datetime.now().year
+        ano_selecionado = st.selectbox(
+            "Ano",
+            options=range(ano_atual-2, ano_atual+1),
+            index=2
+        )
+
+    # Criar tabs
     tab_inserir, tab_entradas, tab_analise, tab_parcelas, tab_fixos, tab_historico = st.tabs([
         "📥 Inserir Fatura",
         "💰 Entradas do Mês",
@@ -261,14 +280,6 @@ elif authentication_status:
         "📌 Gastos Fixos",
         "📈 Histórico"
     ])
-
-    # Seleção global de mês e ano
-    col1, col2 = st.columns(2)
-    with col1:
-        mes_selecionado = st.selectbox("Mês", options=list(mes_options.keys()))
-        mes_num = mes_options[mes_selecionado]
-    with col2:
-        ano_selecionado = st.selectbox("Ano", options=list(range(2024, 2020, -1)))
 
     # Aba de Inserir Fatura
     with tab_inserir:
