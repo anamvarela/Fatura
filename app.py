@@ -590,12 +590,12 @@ with tab_analise:
                                             'valor': float(transacao['Valor']),
                                             'categoria': nova_categoria if st.session_state[edit_key] else categoria
                                         })
-                                        st.toast('✅ Gasto adicionado aos gastos fixos!', icon='✅')
+                                        st.success('✅ Gasto adicionado aos gastos fixos!')
                                         st.experimental_rerun()
                                     else:
                                         # Remover dos gastos fixos
                                         remover_gasto_fixo(transacao['Descrição'], float(transacao['Valor']))
-                                        st.toast('ℹ️ Gasto removido dos gastos fixos', icon='ℹ️')
+                                        st.success('ℹ️ Gasto removido dos gastos fixos')
                                         st.experimental_rerun()
                             else:
                                 # Mostrar ícone se for gasto fixo
@@ -630,12 +630,12 @@ with tab_analise:
                                                 'valor': float(transacao['Valor']),  # Garantir que é float
                                                 'categoria': nova_categoria
                                             })
-                                            st.toast('✅ Gasto adicionado aos gastos fixos!', icon='✅')
+                                            st.success('✅ Gasto adicionado aos gastos fixos!')
                                     else:
                                         # Se não é mais fixo e era antes, remover
                                         if is_gasto_fixo:
                                             remover_gasto_fixo(transacao['Descrição'], float(transacao['Valor']))  # Garantir que é float
-                                            st.toast('ℹ️ Gasto removido dos gastos fixos', icon='ℹ️')
+                                            st.success('ℹ️ Gasto removido dos gastos fixos')
                                     
                                     # Salvar alterações
                                     dados_mes['transacoes'] = df_mes.to_dict('records')
@@ -651,7 +651,7 @@ with tab_analise:
                                     
                                     # Limpar estado de edição
                                     st.session_state[edit_key] = False
-                                    st.toast('✅ Alterações salvas com sucesso!', icon='✅')
+                                    st.success('✅ Alterações salvas com sucesso!')
                                     st.experimental_rerun()
                 
         # Gráficos
@@ -825,7 +825,7 @@ with tab_fixos:
                     'categoria': nova_categoria
                 }
                 adicionar_gasto_fixo(novo_gasto)
-                st.toast('✅ Gasto fixo adicionado com sucesso!', icon='✅')
+                st.success('✅ Gasto fixo adicionado com sucesso!')
                 st.experimental_rerun()
     
     st.markdown("---")
@@ -927,7 +927,7 @@ with tab_fixos:
                     if st.button("🗑️", key=f"del_fix_{idx}", help="Excluir gasto fixo"):
                         valor_float = float(row['Valor'].replace('R$ ', '').replace('.', '').replace(',', '.'))
                         remover_gasto_fixo(row['Descrição'], valor_float)
-                        st.toast('✅ Gasto fixo removido com sucesso!', icon='✅')
+                        st.success('✅ Gasto fixo removido com sucesso!')
                         st.experimental_rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
             
