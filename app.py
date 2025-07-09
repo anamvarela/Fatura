@@ -31,7 +31,7 @@ with open('config.yaml') as file:
 
 # Criar o autenticador
 authenticator = stauth.Authenticate(
-    config['credentials'],
+    config['credentials']['usernames'],
     config['cookie']['name'],
     config['cookie']['key'],
     config['cookie']['expiry_days']
