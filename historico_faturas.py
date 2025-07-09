@@ -4,6 +4,7 @@ import streamlit as st
 from pathlib import Path
 from datetime import datetime, timedelta
 import calendar
+import pandas as pd
 
 def get_user_data_file():
     """Retorna o caminho do arquivo de dados do usuário atual"""
@@ -244,3 +245,141 @@ def obter_entradas(mes, ano):
     dados = carregar_dados()
     return [e for e in dados['entradas'] 
             if e['mes'] == mes and e['ano'] == ano] 
+
+def obter_historico_gastos_mensais():
+    """Retorna o histórico de gastos mensais"""
+    dados = carregar_dados()
+    historico = {}
+    
+    for fatura in dados.get('faturas', []):
+        mes = fatura['mes']
+        ano = fatura['ano']
+        chave = f"{ano}-{mes:02d}"
+        
+        # Calcular total de gastos
+        total_gastos = sum(t['valor'] for t in fatura['transacoes'])
+        
+        # Calcular gastos por categoria
+        df = pd.DataFrame(fatura['transacoes'])
+        if not df.empty:
+            df['categoria'] = df['descricao'].apply(classificar_transacao)
+            gastos_categoria = df.groupby('categoria')['valor'].sum().to_dict()
+        else:
+            gastos_categoria = {}
+        
+        # Obter entradas do mês
+        entradas_mes = [e for e in dados.get('entradas', []) 
+                       if e['mes'] == mes and e['ano'] == ano]
+        total_entradas = sum(e['valor'] for e in entradas_mes)
+        
+        # Obter parcelas do mês
+        parcelas_mes = obter_parcelas_mes(mes, ano)
+        total_parcelas = sum(p['valor_parcela'] for p in parcelas_mes)
+        
+        historico[chave] = {
+            'mes': mes,
+            'ano': ano,
+            'total_gastos': total_gastos,
+            'total_entradas': total_entradas,
+            'total_parcelas': total_parcelas,
+            'gastos_categoria': gastos_categoria
+        }
+    
+    return historico
+
+def obter_historico_categorias():
+    """Retorna o histórico de gastos por categoria"""
+    dados = carregar_dados()
+    historico = {}
+    
+    for fatura in dados.get('faturas', []):
+        mes = fatura['mes']
+        ano = fatura['ano']
+        chave = f"{ano}-{mes:02d}"
+        
+        df = pd.DataFrame(fatura['transacoes'])
+        if not df.empty:
+            df['categoria'] = df['descricao'].apply(classificar_transacao)
+            historico[chave] = df.groupby('categoria')['valor'].sum().to_dict()
+        else:
+            historico[chave] = {}
+    
+    return historico
+
+def obter_media_gastos_categoria():
+    """Calcula a média de gastos por categoria"""
+    historico = obter_historico_categorias()
+    if not historico:
+        return {}
+    
+    # Inicializar dicionário para somar gastos
+    soma_categorias = {}
+    contagem_categorias = {}
+    
+    # Somar gastos por categoria
+    for mes_dados in historico.values():
+        for categoria, valor in mes_dados.items():
+            soma_categorias[categoria] = soma_categorias.get(categoria, 0) + valor
+            contagem_categorias[categoria] = contagem_categorias.get(categoria, 0) + 1
+    
+    # Calcular médias
+    medias = {
+        categoria: soma_categorias[categoria] / contagem_categorias[categoria]
+        for categoria in soma_categorias
+    }
+    
+    return medias
+
+def obter_evolucao_gastos():
+    """Retorna a evolução dos gastos totais ao longo do tempo"""
+    historico = obter_historico_gastos_mensais()
+    evolucao = []
+    
+    for chave in sorted(historico.keys()):
+        dados = historico[chave]
+        evolucao.append({
+            'mes': dados['mes'],
+            'ano': dados['ano'],
+            'total': dados['total_gastos']
+        })
+    
+    return evolucao
+
+def classificar_transacao(descricao):
+    """Classifica a transação em categorias"""
+    descricao = descricao.lower()
+    categorias = {
+        'Alimentação': [
+            'restaurante', 'ifood', 'food', 'mercado', 'supermercado', 'padaria',
+            'confeitaria', 'bar', 'galeto', 'absurda', 'katzsu',
+            'garota do', 'abbraccio', 'leblon resta', 'rainha',
+            'zona sul', 'tabacaria', 'cafeteria', 'casa do alemao',
+            'ferro e farinha', 'eleninha', 'buddario'
+        ],
+        'Transporte': [
+            'uber', '99', 'taxi', 'combustivel', 'estacionamento', 'pedágio',
+            'metro', 'brt', 'van', 'onibus', 'mobilidade', 'posto', 'gasolina'
+        ],
+        'Entretenimento': [
+            'cinema', 'teatro', 'show', 'netflix', 'spotify', 'prime',
+            'ingresso', 'livraria', 'livros', 'jogos', 'game', 'steam',
+            'playstation', 'xbox', 'nintendo', 'hbo', 'disney'
+        ],
+        'Self Care': [
+            'academia', 'farmacia', 'drogaria', 'pacheco', 'salao',
+            'cabelereiro', 'spa', 'massagem', 'medico', 'dentista',
+            'terapia', 'psicolog', 'nutri', 'personal', 'pilates',
+            'yoga', 'crossfit'
+        ],
+        'Compras': [
+            'amazon', 'americanas', 'magalu', 'mercado livre', 'shopee',
+            'aliexpress', 'shein', 'renner', 'riachuelo', 'cea', 'zara',
+            'nike', 'adidas', 'puma', 'centauro', 'decathlon', 'dafiti',
+            'netshoes', 'natura', 'avon', 'boticario', 'sephora'
+        ]
+    }
+    
+    for categoria, palavras_chave in categorias.items():
+        if any(palavra in descricao for palavra in palavras_chave):
+            return categoria
+    return 'Outros' 

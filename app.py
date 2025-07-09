@@ -15,7 +15,9 @@ from historico_faturas import (
     adicionar_entrada, remover_entrada, obter_entradas,
     adicionar_parcela, remover_parcela, marcar_parcela_paga,
     obter_parcelas_mes, calcular_total_parcelas_futuras,
-    obter_parcelas_futuras
+    obter_parcelas_futuras, obter_historico_gastos_mensais,
+    obter_historico_categorias, obter_media_gastos_categoria,
+    obter_evolucao_gastos, classificar_transacao
 )
 import json
 import yaml
@@ -531,77 +533,88 @@ elif authentication_status:
         else:
             st.info("Nenhum gasto fixo cadastrado.")
 
-    # Aba de Histórico
+    # Na aba de Histórico
     with tab_historico:
-        st.subheader("Histórico de Gastos")
+        st.header("📈 Histórico de Gastos")
         
-        # Obter histórico de gastos
-        gastos_mensais = obter_historico_gastos_mensais()
+        # Obter dados históricos
+        historico = obter_historico_gastos_mensais()
+        evolucao = obter_evolucao_gastos()
+        medias_categoria = obter_media_gastos_categoria()
         
-        if gastos_mensais:
-            # Preparar dados para o gráfico
-            df_historico = pd.DataFrame(gastos_mensais)
-            df_historico['Mês/Ano'] = df_historico.apply(
-                lambda x: f"{list(mes_options.keys())[x['mes']-1]}/{x['ano']}",
-                axis=1
+        if not historico:
+            st.info("Nenhum dado histórico encontrado.")
+            st.stop()
+        
+        # Mostrar evolução dos gastos
+        st.subheader("Evolução dos Gastos")
+        df_evolucao = pd.DataFrame(evolucao)
+        
+        # Criar gráfico de linha
+        fig_evolucao = go.Figure()
+        fig_evolucao.add_trace(go.Scatter(
+            x=[f"{row['mes']}/{row['ano']}" for _, row in df_evolucao.iterrows()],
+            y=df_evolucao['total'],
+            mode='lines+markers',
+            name='Total Gasto',
+            line=dict(color='#4B0082', width=2),
+            marker=dict(size=8)
+        ))
+        
+        fig_evolucao.update_layout(
+            title="Evolução dos Gastos Mensais",
+            xaxis_title="Mês/Ano",
+            yaxis_title="Valor Total (R$)",
+            showlegend=True
+        )
+        
+        st.plotly_chart(fig_evolucao, use_container_width=True)
+        
+        # Mostrar médias por categoria
+        st.subheader("Média de Gastos por Categoria")
+        if medias_categoria:
+            df_medias = pd.DataFrame(list(medias_categoria.items()), columns=['Categoria', 'Média'])
+            df_medias = df_medias.sort_values('Média', ascending=False)
+            
+            fig_medias = go.Figure(data=[go.Bar(
+                x=df_medias['Categoria'],
+                y=df_medias['Média'],
+                marker_color='#4B0082'
+            )])
+            
+            fig_medias.update_layout(
+                title="Média de Gastos por Categoria",
+                xaxis_title="Categoria",
+                yaxis_title="Valor Médio (R$)",
+                showlegend=False
             )
             
-            # Gráfico de linha
-            fig = go.Figure()
+            st.plotly_chart(fig_medias, use_container_width=True)
             
-            # Linha de gastos totais
-            fig.add_trace(go.Scatter(
-                x=df_historico['Mês/Ano'],
-                y=df_historico['total'],
-                mode='lines+markers',
-                name='Gasto Total',
-                line=dict(color='#4B0082', width=3),
-                marker=dict(size=8)
-            ))
+            # Mostrar tabela com os valores
+            for _, row in df_medias.iterrows():
+                st.write(f"**{row['Categoria']}**: R$ {row['Média']:.2f}")
+        
+        # Mostrar detalhes por mês
+        st.subheader("Detalhamento Mensal")
+        for chave in sorted(historico.keys(), reverse=True):
+            dados = historico[chave]
+            mes_nome = list(mes_options.keys())[dados['mes'] - 1]
             
-            # Adicionar linha de gastos fixos
-            if gastos_fixos:
-                total_fixos = calcular_total_gastos_fixos()
-                fig.add_trace(go.Scatter(
-                    x=df_historico['Mês/Ano'],
-                    y=[total_fixos] * len(df_historico),
-                    mode='lines',
-                    name='Gastos Fixos',
-                    line=dict(color='#E5E5E5', width=2, dash='dash')
-                ))
-            
-            fig.update_layout(
-                title='Evolução dos Gastos Mensais',
-                xaxis_title='Período',
-                yaxis_title='Valor Total (R$)',
-                height=500,
-                showlegend=True,
-                yaxis=dict(range=[4000, 10000]),
-                legend=dict(
-                    yanchor="bottom",
-                    y=0.01,
-                    xanchor="left",
-                    x=0.01
-                )
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Tabela com os valores
-            st.subheader("Detalhamento por Mês")
-            df_display = df_historico[['Mês/Ano', 'total']].copy()
-            df_display.columns = ['Período', 'Total Gasto']
-            df_display['Total Gasto'] = df_display['Total Gasto'].apply(formatar_valor)
-            
-            st.dataframe(
-                df_display,
-                hide_index=True,
-                column_config={
-                    "Total Gasto": st.column_config.TextColumn(
-                        "Total Gasto",
-                        width="medium"
-                    )
-                }
-            )
-        else:
-            st.info("Ainda não há histórico de gastos registrado.") 
+            with st.expander(f"{mes_nome}/{dados['ano']}"):
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric("Total Gasto", f"R$ {dados['total_gastos']:.2f}")
+                
+                with col2:
+                    st.metric("Total Entradas", f"R$ {dados['total_entradas']:.2f}")
+                
+                with col3:
+                    st.metric("Total Parcelas", f"R$ {dados['total_parcelas']:.2f}")
+                
+                # Mostrar gastos por categoria
+                if dados['gastos_categoria']:
+                    st.write("#### Gastos por Categoria")
+                    for categoria, valor in sorted(dados['gastos_categoria'].items(), key=lambda x: x[1], reverse=True):
+                        st.write(f"**{categoria}**: R$ {valor:.2f}") 
