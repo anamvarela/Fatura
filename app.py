@@ -447,7 +447,7 @@ elif authentication_status:
         authenticator.logout('Logout')
     
     # Título principal com nome do usuário
-    st.markdown(f"<h1 class='main-header'>Análise Faturas Nubank - {name}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h1 class='main-header'>Análise ", unsafe_allow_html=True)
     
     # Inicializar estados
     if 'checkbox_states' not in st.session_state:
