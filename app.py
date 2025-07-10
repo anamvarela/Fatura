@@ -100,15 +100,22 @@ def inicializar_classificacoes_base():
     if not os.path.exists('classificacoes.json'):
         # Lista de estabelecimentos conhecidos
         classificacoes = {
-            # Transporte
-            '99 app': 'Transporte',
+            # Transporte - 99app e todas suas variações
             '99app': 'Transporte',
+            '99 app': 'Transporte',
             '99*app': 'Transporte',
             '99 *app': 'Transporte',
             '99* app': 'Transporte',
             '99 * app': 'Transporte',
             '99app*': 'Transporte',
             '99 app*': 'Transporte',
+            '*99app': 'Transporte',
+            '* 99app': 'Transporte',
+            '99app *': 'Transporte',
+            '99app*99app': 'Transporte',
+            '99app *99app': 'Transporte',
+            '99app * 99app': 'Transporte',
+            '99app* 99app': 'Transporte',
             
             # Restaurantes
             'abbraccio leblon': 'Alimentação',
@@ -220,6 +227,10 @@ def classificar_transacao(descricao):
     classificacoes_salvas = carregar_classificacoes_salvas()
     if descricao in classificacoes_salvas:
         return classificacoes_salvas[descricao]
+
+    # Verificações específicas de alta prioridade
+    if '99app' in descricao or '99 app' in descricao:
+        return 'Transporte'
 
     # Verificar se é uma entrada
     palavras_entrada = ['reembolso', 'estorno', 'cashback', 'rendimento', 'pagamento recebido', 'transferencia recebida']
