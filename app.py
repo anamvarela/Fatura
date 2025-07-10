@@ -728,6 +728,10 @@ elif authentication_status:
     with tab_analise:
         st.header("📊 Análise de Gastos")
         
+        # Inicializar session_state para categoria aberta
+        if 'categoria_aberta' not in st.session_state:
+            st.session_state.categoria_aberta = None
+
         # Botão para adicionar nova classificação no topo
         with st.expander("➕ Criar Nova Classificação"):
             with st.form("nova_classificacao", clear_on_submit=True):
@@ -783,14 +787,19 @@ elif authentication_status:
 
         # Mostrar transações por categoria
         for categoria, total in totais_categoria.items():
-            with st.expander(f"📁 {categoria} - {formatar_valor(total)} ({(total/total_atual*100):.1f}%) - {len(df[df['categoria'] == categoria])} transações"):
+            # Usar o estado para controlar se o expander está aberto
+            is_open = st.session_state.categoria_aberta == categoria
+            with st.expander(
+                f"📁 {categoria} - {formatar_valor(total)} ({(total/total_atual*100):.1f}%) - {len(df[df['categoria'] == categoria])} transações",
+                expanded=is_open
+            ):
                 gastos_categoria = df[df['categoria'] == categoria].sort_values('valor', ascending=False)
                 
                 # Criar container para reduzir espaçamento
                 with st.container():
                     for idx, transacao in gastos_categoria.iterrows():
                         # Layout mais compacto
-                        cols = st.columns([1, 3, 2, 0.5, 0.5, 0.5])  # Adicionado mais uma coluna para o botão de excluir
+                        cols = st.columns([1, 3, 2, 0.5, 0.5, 0.5])
                         
                         with cols[0]:
                             st.write(transacao['data'])
@@ -808,9 +817,13 @@ elif authentication_status:
                         with cols[4]:
                             if st.button("✏️", key=f"edit_{idx}"):
                                 st.session_state[f'editing_{idx}'] = True
+                                # Salvar a categoria atual para manter aberta
+                                st.session_state.categoria_aberta = categoria
                         
                         with cols[5]:
                             if st.button("🗑️", key=f"del_{idx}"):
+                                # Salvar a categoria atual para manter aberta
+                                st.session_state.categoria_aberta = categoria
                                 remover_transacao(
                                     fatura_atual['mes'],
                                     fatura_atual['ano'],
@@ -863,6 +876,8 @@ elif authentication_status:
                                             # Salvar todas as alterações
                                             salvar_dados(dados)
                                             st.session_state[f'editing_{idx}'] = False
+                                            # Manter a categoria aberta após salvar
+                                            st.session_state.categoria_aberta = categoria
                                             st.success("✓ Alterações salvas!")
                                             st.rerun()
                                         except Exception as e:
@@ -871,6 +886,8 @@ elif authentication_status:
                                 with col2:
                                     if st.form_submit_button("❌ Cancelar"):
                                         st.session_state[f'editing_{idx}'] = False
+                                        # Manter a categoria aberta após cancelar
+                                        st.session_state.categoria_aberta = categoria
                                         st.rerun()
                         
                         st.markdown("---")
