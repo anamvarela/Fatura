@@ -229,7 +229,8 @@ def classificar_transacao(descricao):
         return classificacoes_salvas[descricao]
 
     # Verificações específicas de alta prioridade
-    if '99app' in descricao or '99 app' in descricao:
+    # 99 em qualquer formato vai para Transporte
+    if '99' in descricao:
         return 'Transporte'
 
     # Verificar se é uma entrada
@@ -261,9 +262,8 @@ def classificar_transacao(descricao):
             'peixaria', 'supernosso', 'verdemar', 'epa', 'super', 'mart'
         ],
         'Transporte': [
-            # Apps de transporte
-            'uber', '99 taxi', '99taxi', '99 pop', '99pop', '99*', '99 *', 
-            'cabify', 'taxi', 'táxi', 'transfer', 'shuttle', 'buser',
+            # Apps de transporte (removido 99 pois já está tratado acima)
+            'uber', 'cabify', 'taxi', 'táxi', 'transfer', 'shuttle', 'buser',
             # Combustível
             'posto', 'shell', 'ipiranga', 'petrobras', 'br posto', 'ale',
             'combustivel', 'gasolina', 'etanol', 'diesel', 'br mania',
