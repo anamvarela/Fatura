@@ -1209,6 +1209,7 @@ elif authentication_status:
                     y=valores,
                     text=[formatar_valor(v) if v > 0 else '' for v in valores],
                     textposition='auto',
+                    textfont=dict(color='white'),
                     marker_color=cores_roxo[i % len(cores_roxo)]
                 ))
             
@@ -1216,6 +1217,7 @@ elif authentication_status:
                 title="Comparação de Gastos por Categoria",
                 xaxis_title="Categoria",
                 yaxis_title="Valor (R$)",
+                yaxis=dict(range=[0, 6000]),
                 barmode='group',
                 height=600,
                 showlegend=True,
