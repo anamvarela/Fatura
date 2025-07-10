@@ -92,10 +92,58 @@ def remover_transacao(fatura_mes, fatura_ano, descricao, valor):
     
     salvar_dados(dados)
 
+def inicializar_classificacoes_base():
+    """
+    Inicializa a base de classificações com estabelecimentos conhecidos.
+    Só cria se o arquivo não existir.
+    """
+    if not os.path.exists('classificacoes.json'):
+        # Lista de estabelecimentos conhecidos
+        classificacoes = {
+            # Restaurantes
+            'abbraccio leblon': 'Alimentação',
+            'absurda confeitaria': 'Alimentação',
+            'amen gavea': 'Alimentação',
+            'armazem 14 leblon': 'Alimentação',
+            'art food rio bar e res': 'Alimentação',
+            'bacio di latte': 'Alimentação',
+            'bendita chica': 'Alimentação',
+            'braseiro da gavea': 'Alimentação',
+            'buddario': 'Alimentação',
+            'cabana': 'Alimentação',
+            'casa do alemao': 'Alimentação',
+            'casa do pao de queijo': 'Alimentação',
+            'choperiakaraoke': 'Alimentação',
+            'emporio jardim': 'Alimentação',
+            'fafato restaurante ba': 'Alimentação',
+            'galeto leblon': 'Alimentação',
+            'galeto rainha leblon': 'Alimentação',
+            'la guapa': 'Alimentação',
+            'la guapa - botafogo': 'Alimentação',
+            'lena park': 'Alimentação',
+            'nama restaurante': 'Alimentação',
+            'natural delli buffet': 'Alimentação',
+            'padaria oceanos': 'Alimentação',
+            'pasta & basta': 'Alimentação',
+            'pavilhao botafogo': 'Alimentação',
+            'posi mozza': 'Alimentação',
+            'reserva 11 beach club': 'Alimentação',
+            'restaurante nanquim': 'Alimentação',
+            'sardinha atividades ga': 'Alimentação',
+            'sheesh downtown': 'Alimentação',
+            'smoov barra sucos': 'Alimentação',
+            'stuzzi': 'Alimentação',
+            'tintin': 'Alimentação',
+            'yogoberry': 'Alimentação'
+        }
+        salvar_classificacoes(classificacoes)
+
 def carregar_classificacoes_salvas():
     """
     Carrega o dicionário de classificações já realizadas.
+    Se não existir, inicializa com a base de estabelecimentos conhecidos.
     """
+    inicializar_classificacoes_base()  # Garante que temos as classificações base
     try:
         with open('classificacoes.json', 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -163,116 +211,97 @@ def classificar_transacao(descricao):
     if descricao in classificacoes_salvas:
         return classificacoes_salvas[descricao]
 
-    # Dicionário de estabelecimentos por categoria
-    categorias = {
-        'Alimentação': {
-            'restaurantes': [
-                'restaurante', 'rest', 'churrascaria', 'pizzaria', 'pizza',
-                'hamburger', 'burger', 'lanchonete', 'bar', 'boteco',
-                'galeto', 'padaria', 'confeitaria', 'doceria', 'cafeteria',
-                'cafe', 'bistro', 'cantina', 'buffet', 'grill', 'espeto',
-                'pastelaria', 'pastel', 'rotisserie', 'sushi', 'japanese',
-                'china', 'chinesa', 'thai', 'mexicano', 'árabe', 'arabe',
-                'absurda', 'ferro e farinha'
-            ],
-            'delivery': [
-                'ifood', 'rappi', 'uber eats', 'delivery', 'entrega',
-                '99 food', 'james delivery', 'aiqfome', 'deliverydireto'
-            ],
-            'mercado': [
-                'mercado', 'supermercado', 'hortifruti', 'sacolao', 'feira',
-                'mercearia', 'atacado', 'atacadao', 'carrefour', 'pao de acucar',
-                'extra', 'dia', 'assai', 'sams club', 'makro', 'tenda',
-                'quitanda', 'adega', 'emporio', 'armazem', 'minimercado',
-                'mercadinho', 'acougue', 'açougue', 'peixaria', 'padaria',
-                'mercadolivre*14produt', 'mercadolivre*', 'mercado livre',
-                'supernosso', 'verdemar', 'epa', 'super', 'mart'
-            ]
-        },
-        'Transporte': {
-            'apps': [
-                'uber', '99 taxi', '99taxi', '99 pop', '99pop', 'cabify',
-                'taxi', 'táxi', 'transfer', 'shuttle', 'buser'
-            ],
-            'combustivel': [
-                'posto', 'shell', 'ipiranga', 'petrobras', 'br posto',
-                'ale', 'combustivel', 'gasolina', 'etanol', 'diesel'
-            ],
-            'transporte_publico': [
-                'metro', 'metrô', 'trem', 'onibus', 'ônibus', 'brt',
-                'vlt', 'bilhete unico', 'bilhete único', 'cartao riocard',
-                'cartão riocard', 'bom', 'bem', 'metrocard', 'subway'
-            ],
-            'estacionamento': [
-                'estacionamento', 'parking', 'zona azul', 'parquimetro',
-                'estapar', 'multipark', 'autopark'
-            ]
-        },
-        'Entretenimento': {
-            'streaming': [
-                'netflix', 'spotify', 'amazon prime', 'disney+', 'hbo max',
-                'youtube premium', 'deezer', 'apple music', 'tidal',
-                'paramount+', 'globoplay', 'crunchyroll', 'twitch'
-            ],
-            'jogos': [
-                'steam', 'playstation', 'psn', 'xbox', 'nintendo',
-                'epic games', 'battle.net', 'origin', 'uplay', 'gog'
-            ],
-            'eventos': [
-                'cinema', 'teatro', 'show', 'evento', 'ingresso',
-                'tickets', 'sympla', 'eventbrite', 'ticket360',
-                'ingressorapido', 'livepass', 'ticketmaster'
-            ]
-        },
-        'Self Care': {
-            'saude': [
-                'farmacia', 'drogaria', 'droga', 'pacheco', 'raia',
-                'farmácia', 'remedios', 'remédios', 'medicamentos',
-                'consulta', 'medico', 'médico', 'dentista', 'psicólogo',
-                'psicologo', 'terapeuta', 'fisioterapeuta', 'nutricionista',
-                'exame', 'laboratorio', 'laboratório', 'clinica', 'clínica',
-                'hospital', 'plano de saude', 'plano de saúde'
-            ],
-            'beleza': [
-                'salao', 'salão', 'cabelereiro', 'cabeleireiro', 'manicure',
-                'pedicure', 'spa', 'massagem', 'estetica', 'estética',
-                'barbearia', 'barber', 'depilacao', 'depilação', 'beauty'
-            ],
-            'academia': [
-                'academia', 'gym', 'crossfit', 'pilates', 'yoga',
-                'personal', 'trainer', 'box', 'fitness', 'smart fit',
-                'bodytech', 'selfit'
-            ]
-        },
-        'Compras': {
-            'vestuario': [
-                'renner', 'cea', 'c&a', 'riachuelo', 'marisa', 'hering',
-                'zara', 'forever 21', 'nike', 'adidas', 'puma', 'under armour',
-                'centauro', 'decathlon', 'netshoes', 'dafiti', 'shop', 'store'
-            ],
-            'eletronicos': [
-                'amazon', 'americanas', 'submarino', 'magalu',
-                'magazine luiza', 'casas bahia', 'ponto frio', 'fastshop',
-                'kabum', 'aliexpress', 'shopee', 'mercado livre'
-            ],
-            'casa': [
-                'leroy merlin', 'telhanorte', 'c&c', 'tok&stok', 'etna',
-                'camicado', 'mobly', 'madeira', 'madeiramadeira',
-                'casa', 'lar', 'home', 'decoração', 'moveis', 'móveis'
-            ]
-        }
-    }
-
     # Verificar se é uma entrada
     palavras_entrada = ['reembolso', 'estorno', 'cashback', 'rendimento', 'pagamento recebido', 'transferencia recebida']
     if any(palavra in descricao for palavra in palavras_entrada):
         return "ENTRADA"
 
-    # Procurar por correspondências nas categorias e subcategorias
-    for categoria, subcategorias in categorias.items():
-        for subcategoria, palavras_chave in subcategorias.items():
-            if any(palavra in descricao for palavra in palavras_chave):
-                return categoria
+    # Dicionário de estabelecimentos por categoria
+    categorias = {
+        'Alimentação': [
+            # Restaurantes e similares
+            'restaurante', 'rest.', 'rest ', 'churrascaria', 'pizzaria', 'pizza',
+            'hamburger', 'burger', 'lanchonete', 'bar', 'boteco', 'cantina',
+            'galeto', 'padaria', 'confeitaria', 'doceria', 'cafeteria', 'café',
+            'bistro', 'buffet', 'grill', 'espeto', 'pastelaria', 'pastel',
+            'rotisserie', 'sushi', 'japanese', 'china in box', 'chinesa', 'thai',
+            'mexicano', 'árabe', 'arabe', 'absurda', 'ferro e farinha',
+            'outback', 'mcdonalds', 'mc donalds', 'burger king', 'bk', 'subway',
+            'habibs', 'spoleto', 'giraffas', 'madero', 'dominos', 'pizza hut',
+            'starbucks', 'kopenhagen', 'cacau show',
+            # Delivery
+            'ifood', 'rappi', 'uber eats', 'james delivery', 'aiqfome',
+            # Mercados e similares
+            'carrefour', 'extra', 'pao de acucar', 'assai', 'mundial', 'guanabara',
+            'zona sul', 'hortifruti', 'supermarket', 'mercado', 'supermercado',
+            'sacolao', 'feira', 'mercearia', 'atacado', 'atacadao', 'dia',
+            'sams club', 'makro', 'tenda', 'quitanda', 'adega', 'emporio',
+            'armazem', 'minimercado', 'mercadinho', 'acougue', 'açougue',
+            'peixaria', 'supernosso', 'verdemar', 'epa', 'super', 'mart'
+        ],
+        'Transporte': [
+            # Apps de transporte
+            'uber', '99 taxi', '99taxi', '99 pop', '99pop', '99*', '99 *', 
+            'cabify', 'taxi', 'táxi', 'transfer', 'shuttle', 'buser',
+            # Combustível
+            'posto', 'shell', 'ipiranga', 'petrobras', 'br posto', 'ale',
+            'combustivel', 'gasolina', 'etanol', 'diesel', 'br mania',
+            # Transporte público
+            'metro', 'metrô', 'trem', 'onibus', 'ônibus', 'brt', 'vlt',
+            'bilhete unico', 'bilhete único', 'cartao riocard', 'supervia',
+            'cartão riocard', 'bom', 'bem', 'metrocard',
+            # Estacionamento
+            'estacionamento', 'parking', 'zona azul', 'parquimetro',
+            'estapar', 'multipark', 'autopark'
+        ],
+        'Entretenimento': [
+            # Streaming
+            'netflix', 'spotify', 'amazon prime', 'disney+', 'hbo max',
+            'youtube premium', 'deezer', 'apple music', 'tidal',
+            'paramount+', 'globoplay', 'crunchyroll', 'twitch',
+            # Jogos
+            'steam', 'playstation', 'psn', 'xbox', 'nintendo',
+            'epic games', 'battle.net', 'origin', 'uplay', 'gog',
+            # Eventos
+            'cinema', 'teatro', 'show', 'evento', 'ingresso', 'tickets',
+            'sympla', 'eventbrite', 'ticket360', 'ingressorapido',
+            'livepass', 'ticketmaster', 'cinemark', 'kinoplex'
+        ],
+        'Self Care': [
+            # Saúde
+            'farmacia', 'drogaria', 'droga', 'pacheco', 'raia', 'drogasil',
+            'farmácia', 'remedios', 'remédios', 'medicamentos', 'consulta',
+            'medico', 'médico', 'dentista', 'psicólogo', 'psicologo',
+            'terapeuta', 'fisioterapeuta', 'nutricionista', 'exame',
+            'laboratorio', 'laboratório', 'clinica', 'clínica', 'hospital',
+            'plano de saude', 'plano de saúde',
+            # Beleza
+            'salao', 'salão', 'cabelereiro', 'cabeleireiro', 'manicure',
+            'pedicure', 'spa', 'massagem', 'estetica', 'estética',
+            'barbearia', 'barber', 'depilacao', 'depilação', 'beauty',
+            # Academia
+            'academia', 'gym', 'crossfit', 'pilates', 'yoga', 'personal',
+            'trainer', 'box', 'fitness', 'smart fit', 'bodytech', 'selfit'
+        ],
+        'Compras': [
+            # Lojas de departamento e vestuário
+            'renner', 'cea', 'c&a', 'riachuelo', 'marisa', 'hering',
+            'zara', 'forever 21', 'leader', 'h&m', 'shop', 'store', 'loja',
+            # Lojas de esporte
+            'centauro', 'decathlon', 'netshoes', 'nike', 'adidas', 'puma',
+            # Lojas online
+            'amazon', 'americanas', 'submarino', 'magalu', 'magazine luiza',
+            'shopee', 'aliexpress', 'shein', 'mercado livre', 'kabum',
+            # Outras lojas
+            'casas bahia', 'ponto frio', 'fastshop', 'leroy merlin',
+            'telhanorte', 'c&c', 'tok&stok', 'etna', 'camicado', 'mobly'
+        ]
+    }
+
+    # Procurar por correspondências nas categorias
+    for categoria, palavras_chave in categorias.items():
+        if any(palavra in descricao for palavra in palavras_chave):
+            return categoria
 
     return "Outros"
 
