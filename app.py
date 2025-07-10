@@ -151,7 +151,18 @@ def inicializar_classificacoes_base():
             'smoov barra sucos': 'Alimentação',
             'stuzzi': 'Alimentação',
             'tintin': 'Alimentação',
-            'yogoberry': 'Alimentação'
+            'yogoberry': 'Alimentação',
+            # Novos restaurantes encontrados nos dados históricos
+            'eleninha': 'Alimentação',
+            'dri': 'Alimentação',
+            'jobi': 'Alimentação',
+            'scarpi': 'Alimentação',
+            'katzsu bar': 'Alimentação',
+            'woods wine comercio': 'Alimentação',
+            'tabacaria e cafeteria': 'Alimentação',
+            'zig*caza lagoa': 'Alimentação',
+            'zig*bud zone rj': 'Alimentação',
+            'megamatterg': 'Alimentação'
         }
         salvar_classificacoes(classificacoes)
 
@@ -231,6 +242,10 @@ def classificar_transacao(descricao):
         atualizar_classificacao_salva(descricao, 'Transporte')
         return 'Transporte'
     
+    # VERIFICAÇÕES ESPECIAIS PARA COMPRAS (antes de verificar mercado)
+    if 'mercado livre' in descricao or 'mercadolivre' in descricao:
+        return 'Compras'
+    
     # Verificar se já existe uma classificação salva
     classificacoes_salvas = carregar_classificacoes_salvas()
     if descricao in classificacoes_salvas:
@@ -262,7 +277,17 @@ def classificar_transacao(descricao):
             'sacolao', 'feira', 'mercearia', 'atacado', 'atacadao', 'dia',
             'sams club', 'makro', 'tenda', 'quitanda', 'adega', 'emporio',
             'armazem', 'minimercado', 'mercadinho', 'acougue', 'açougue',
-            'peixaria', 'supernosso', 'verdemar', 'epa', 'super', 'mart'
+            'peixaria', 'supernosso', 'verdemar', 'epa', 'super', 'mart',
+            # Restaurantes específicos baseados nos dados históricos
+            'bendita chica', 'bendita', 'chica', 'amen gavea', 'amen',
+            'art food', 'abbraccio', 'braseiro', 'gavea', 'nama',
+            'nanquim', 'posi mozza', 'posi', 'mozza', 'smoov', 'sucos',
+            'katzsu', 'katzsu bar', 'eleninha', 'buddario', 'dri',
+            'jobi', 'scarpi', 'tintin', 'choperiakaraoke', 'chopp',
+            'casa do alemao', 'alemao', 'tabacaria', 'cafeteria',
+            'woods wine', 'woods', 'wine', 'reserva 11', 'beach club',
+            'zig', 'caza', 'lagoa', 'sheesh', 'downtown', 'galeto',
+            'rainha', 'leblon', 'natural delli', 'buffet', 'food'
         ],
         'Transporte': [
             # Apps de transporte (removido 99 pois já está tratado acima)
@@ -408,6 +433,43 @@ def corrigir_classificacoes_99app():
                     print(f"Corrigindo classificação de '{transacao['descricao']}' para Transporte")
                     # Salva a classificação correta
                     atualizar_classificacao_salva(descricao, 'Transporte')
+    
+    salvar_dados(dados)
+    return corrigidas
+
+def corrigir_classificacoes_restaurantes():
+    """
+    Corrige todas as classificações incorretas de restaurantes que estão como 'Compras' ou 'Outros' para 'Alimentação'.
+    """
+    dados = carregar_dados()
+    faturas = dados.get('faturas', [])
+    
+    # Lista de restaurantes conhecidos
+    restaurantes_conhecidos = [
+        'bendita chica', 'bendita', 'amen gavea', 'amen', 'art food',
+        'abbraccio', 'braseiro', 'gavea', 'nama', 'nanquim', 'posi mozza',
+        'posi', 'mozza', 'smoov', 'sucos', 'katzsu', 'eleninha', 'buddario',
+        'dri', 'jobi', 'scarpi', 'tintin', 'choperiakaraoke', 'chopp',
+        'alemao', 'tabacaria', 'woods wine', 'woods', 'wine', 'reserva 11',
+        'beach club', 'zig', 'caza', 'lagoa', 'sheesh', 'downtown',
+        'galeto', 'rainha', 'leblon', 'natural delli', 'buffet', 'absurda',
+        'confeitaria', 'zona sul', 'restaurante', 'bar', 'cafeteria'
+    ]
+    
+    corrigidas = 0
+    for fatura in faturas:
+        for transacao in fatura.get('transacoes', []):
+            descricao = transacao.get('descricao', '').lower()
+            categoria_atual = transacao.get('categoria', '')
+            
+            # Verifica se é um restaurante e se está classificado incorretamente
+            if any(rest in descricao for rest in restaurantes_conhecidos):
+                if categoria_atual in ['Compras', 'Outros']:
+                    transacao['categoria'] = 'Alimentação'
+                    corrigidas += 1
+                    print(f"Corrigindo classificação de '{transacao['descricao']}' para Alimentação")
+                    # Salva a classificação correta
+                    atualizar_classificacao_salva(descricao, 'Alimentação')
     
     salvar_dados(dados)
     return corrigidas
@@ -579,11 +641,25 @@ elif authentication_status:
         if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
             return "Transporte"
         
+        # VERIFICAÇÕES ESPECIAIS PARA COMPRAS (antes de verificar mercado)
+        if 'mercado livre' in descricao or 'mercadolivre' in descricao:
+            return "Compras"
+        
         # Alimentação
         if any(palavra in descricao for palavra in [
             'ifood', 'rappi', 'uber eats', 'restaurante', 'padaria', 'mercado',
             'supermercado', 'hortifruti', 'açougue', 'acougue', 'cafeteria',
-            'cafe', 'café', 'bar', 'lanchonete', 'food', 'burger'
+            'cafe', 'café', 'bar', 'lanchonete', 'food', 'burger',
+            # Restaurantes específicos
+            'bendita chica', 'bendita', 'chica', 'amen gavea', 'amen',
+            'art food', 'abbraccio', 'braseiro', 'gavea', 'nama',
+            'nanquim', 'posi mozza', 'posi', 'mozza', 'smoov', 'sucos',
+            'katzsu', 'eleninha', 'buddario', 'dri', 'jobi', 'scarpi',
+            'tintin', 'choperiakaraoke', 'chopp', 'alemao', 'tabacaria',
+            'woods wine', 'woods', 'wine', 'reserva 11', 'beach club',
+            'zig', 'caza', 'lagoa', 'sheesh', 'downtown', 'galeto',
+            'rainha', 'leblon', 'natural delli', 'buffet', 'absurda',
+            'confeitaria', 'zona sul'
         ]):
             return "Alimentação"
         
@@ -794,8 +870,8 @@ elif authentication_status:
                         else:
                             st.error("Esta classificação já existe!")
         
-        # Botão para corrigir classificações do 99app
-        col1, col2, col3 = st.columns([1, 1, 2])
+        # Botões para corrigir classificações
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             if st.button("🔧 Corrigir 99app", use_container_width=True):
                 corrigidas = corrigir_classificacoes_99app()
@@ -804,6 +880,26 @@ elif authentication_status:
                     st.rerun()
                 else:
                     st.info("Nenhuma transação do 99app precisou ser corrigida.")
+        
+        with col2:
+            if st.button("🍴 Corrigir Restaurantes", use_container_width=True):
+                corrigidas = corrigir_classificacoes_restaurantes()
+                if corrigidas > 0:
+                    st.success(f"✓ {corrigidas} restaurantes corrigidos para Alimentação!")
+                    st.rerun()
+                else:
+                    st.info("Nenhum restaurante precisou ser corrigido.")
+        
+        with col3:
+            if st.button("🔄 Corrigir Tudo", use_container_width=True):
+                corrigidas_99app = corrigir_classificacoes_99app()
+                corrigidas_rest = corrigir_classificacoes_restaurantes()
+                total_corrigidas = corrigidas_99app + corrigidas_rest
+                if total_corrigidas > 0:
+                    st.success(f"✓ {total_corrigidas} transações corrigidas ({corrigidas_99app} 99app + {corrigidas_rest} restaurantes)!")
+                    st.rerun()
+                else:
+                    st.info("Todas as classificações já estão corretas.")
         
         # Carregar dados
         dados = carregar_dados()

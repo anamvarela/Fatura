@@ -394,13 +394,25 @@ def classificar_transacao(descricao):
     if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
         return 'Transporte'
     
+    # VERIFICAÇÕES ESPECIAIS PARA COMPRAS (antes de verificar mercado)
+    if 'mercado livre' in descricao or 'mercadolivre' in descricao:
+        return 'Compras'
+    
     categorias = {
         'Alimentação': [
             'restaurante', 'ifood', 'food', 'mercado', 'supermercado', 'padaria',
             'confeitaria', 'bar', 'galeto', 'absurda', 'katzsu',
             'garota do', 'abbraccio', 'leblon resta', 'rainha',
             'zona sul', 'tabacaria', 'cafeteria', 'casa do alemao',
-            'ferro e farinha', 'eleninha', 'buddario'
+            'ferro e farinha', 'eleninha', 'buddario',
+            # Restaurantes específicos baseados nos dados históricos
+            'bendita chica', 'bendita', 'chica', 'amen gavea', 'amen',
+            'art food', 'braseiro', 'gavea', 'nama', 'nanquim', 'posi mozza',
+            'posi', 'mozza', 'smoov', 'sucos', 'katzsu bar', 'dri',
+            'jobi', 'scarpi', 'tintin', 'choperiakaraoke', 'chopp',
+            'alemao', 'woods wine', 'woods', 'wine', 'reserva 11', 'beach club',
+            'zig', 'caza', 'lagoa', 'sheesh', 'downtown', 'leblon',
+            'natural delli', 'buffet'
         ],
         'Transporte': [
             'uber', '99', 'taxi', 'combustivel', 'estacionamento', 'pedágio',
