@@ -260,23 +260,9 @@ def editar_categoria_transacao(fatura_mes, fatura_ano, descricao, valor, nova_ca
         if fatura['mes'] == fatura_mes and fatura['ano'] == fatura_ano:
             for transacao in fatura['transacoes']:
                 if transacao['descricao'] == descricao and abs(transacao['valor'] - valor) < 0.01:
-                    # Se a nova categoria for ENTRADA, mover para entradas
-                    if nova_categoria == "ENTRADA":
-                        entradas = dados.get('entradas', [])
-                        entrada = {
-                            'descricao': transacao['descricao'],
-                            'valor': transacao['valor'],
-                            'mes': fatura_mes,
-                            'ano': fatura_ano
-                        }
-                        entradas.append(entrada)
-                        dados['entradas'] = entradas
-                        # Remover da lista de transações
-                        fatura['transacoes'].remove(transacao)
-                    else:
-                        transacao['categoria'] = nova_categoria
-                        # Salvar a classificação para uso futuro
-                        atualizar_classificacao_salva(descricao, nova_categoria)
+                    transacao['categoria'] = nova_categoria
+                    # Salvar a classificação para uso futuro
+                    atualizar_classificacao_salva(descricao, nova_categoria)
                     break
     
     salvar_dados(dados)
@@ -300,9 +286,8 @@ def classificar_transacao(descricao):
     if 'mercado livre' in descricao or 'mercadolivre' in descricao:
         return 'Roupas'
     
-    # Verificar se contém "estorno" ou "desconto" (deve ser entrada, não despesa)
-    if 'estorno' in descricao or 'desconto' in descricao:
-        return "ENTRADA"
+    # Verificar se contém "estorno" ou "desconto" - isso é tratado na função adicionar_fatura()
+    # Não classificamos aqui, apenas retornamos categoria normal
     
     # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
     categoria_regra = aplicar_regras_classificacao(descricao)
@@ -318,10 +303,10 @@ def classificar_transacao(descricao):
     if descricao in classificacoes_salvas:
         return classificacoes_salvas[descricao]
 
-    # Verificar se é uma entrada
-    palavras_entrada = ['reembolso', 'cashback', 'rendimento', 'pagamento recebido', 'transferencia recebida']
-    if any(palavra in descricao for palavra in palavras_entrada):
-        return "ENTRADA"
+    # Verificar se é uma entrada - isso é tratado na função adicionar_fatura()
+    # palavras_entrada = ['reembolso', 'cashback', 'rendimento', 'pagamento recebido', 'transferencia recebida']
+    # if any(palavra in descricao for palavra in palavras_entrada):
+    #     return "ENTRADA"
 
     # Dicionário de estabelecimentos por categoria
     categorias = {
@@ -431,11 +416,10 @@ def adicionar_fatura(fatura):
     entradas = dados.get('entradas', [])
     
     for transacao in fatura['transacoes']:
-        if 'categoria' not in transacao:
-            transacao['categoria'] = classificar_transacao(transacao['descricao'])
+        descricao_lower = transacao['descricao'].lower()
         
-        # Se for estorno/entrada, mover para entradas
-        if transacao['categoria'] == "ENTRADA":
+        # VERIFICAR PRIMEIRO se é estorno/desconto (vai para entradas)
+        if 'estorno' in descricao_lower or 'desconto' in descricao_lower:
             entrada = {
                 'descricao': transacao['descricao'],
                 'valor': transacao['valor'],
@@ -444,7 +428,9 @@ def adicionar_fatura(fatura):
             }
             entradas.append(entrada)
         else:
-            # Se não for entrada, manter como despesa
+            # Se não for entrada, classificar normalmente e manter como despesa
+            if 'categoria' not in transacao:
+                transacao['categoria'] = classificar_transacao(transacao['descricao'])
             transacoes_despesas.append(transacao)
     
     # Atualizar a fatura apenas com despesas
@@ -572,17 +558,42 @@ def reaplicar_regras_todas_transacoes():
     """
     dados = carregar_dados()
     transacoes_atualizadas = 0
+    entradas = dados.get('entradas', [])
     
     # Aplicar regras às faturas
     for fatura in dados.get('faturas', []):
-        for transacao in fatura.get('transacoes', []):
-            categoria_original = transacao.get('categoria', '')
-            categoria_nova = classificar_transacao(transacao['descricao'])
+        transacoes_para_remover = []
+        
+        for i, transacao in enumerate(fatura.get('transacoes', [])):
+            descricao_lower = transacao['descricao'].lower()
             
-            # Se a categoria mudou, atualizar
-            if categoria_original != categoria_nova:
-                transacao['categoria'] = categoria_nova
+            # Verificar se deve ir para entradas
+            if 'estorno' in descricao_lower or 'desconto' in descricao_lower:
+                # Mover para entradas
+                entrada = {
+                    'descricao': transacao['descricao'],
+                    'valor': transacao['valor'],
+                    'mes': fatura['mes'],
+                    'ano': fatura['ano']
+                }
+                entradas.append(entrada)
+                transacoes_para_remover.append(i)
                 transacoes_atualizadas += 1
+            else:
+                # Verificar se a categoria mudou
+                categoria_original = transacao.get('categoria', '')
+                categoria_nova = classificar_transacao(transacao['descricao'])
+                
+                if categoria_original != categoria_nova:
+                    transacao['categoria'] = categoria_nova
+                    transacoes_atualizadas += 1
+        
+        # Remover transações que foram movidas para entradas
+        for i in reversed(transacoes_para_remover):
+            del fatura['transacoes'][i]
+    
+    # Atualizar entradas nos dados
+    dados['entradas'] = entradas
     
     # Salvar os dados atualizados
     salvar_dados(dados)
@@ -733,9 +744,8 @@ elif authentication_status:
     def classificar_transacao(descricao):
         descricao = descricao.lower()
         
-        # Verificar se contém "estorno" ou "desconto" (deve ser entrada, não despesa)
-        if 'estorno' in descricao or 'desconto' in descricao:
-            return "ENTRADA"
+        # Verificar se contém "estorno" ou "desconto" - isso é tratado na função adicionar_fatura()
+        # Não classificamos aqui, apenas retornamos categoria normal
         
         # Verificar se é Zig* (entretenimento)
         if descricao.startswith('zig'):

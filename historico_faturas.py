@@ -409,9 +409,8 @@ def classificar_transacao(descricao):
     """Classifica a transação em categorias"""
     descricao = descricao.lower()
     
-    # Verificar se contém "estorno" ou "desconto" (deve ser entrada, não despesa)
-    if 'estorno' in descricao or 'desconto' in descricao:
-        return "ENTRADA"
+    # Verificar se contém "estorno" ou "desconto" - isso é tratado na função adicionar_fatura()
+    # Não classificamos aqui, apenas retornamos categoria normal
     
     # Verificar se é Zig* (entretenimento)
     if descricao.startswith('zig'):
