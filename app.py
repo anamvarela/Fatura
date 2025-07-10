@@ -959,8 +959,7 @@ elif authentication_status:
             st.warning("Nenhuma fatura encontrada para este mês.")
             st.stop()
         
-        # Mostrar detalhamento por categoria
-        st.write("### Detalhamento por Categoria")
+        # Calcular dados para métricas
         df = pd.DataFrame(fatura_atual['transacoes'])
         
         # Atualizar categorias com as já salvas
@@ -975,6 +974,56 @@ elif authentication_status:
 
         # Calcular total geral
         total_atual = totais_categoria.sum()
+        
+        # Calcular entradas do mês atual
+        entradas_mes = obter_entradas(mes_num, ano_selecionado)
+        total_entradas = sum(e['valor'] for e in entradas_mes)
+        
+        # Calcular total anterior
+        total_anterior = 0
+        if fatura_anterior:
+            total_anterior = sum(t['valor'] for t in fatura_anterior['transacoes'])
+        
+        # Calcular variação
+        variacao = total_atual - total_anterior
+        percentual_variacao = (variacao / total_anterior * 100) if total_anterior > 0 else 0
+        
+        # Mostrar métricas
+        st.write("### Resumo do Mês")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric(
+                "💰 Gasto Total",
+                formatar_valor(total_atual),
+                delta=f"{formatar_valor(variacao)} ({percentual_variacao:+.1f}%)" if fatura_anterior else None
+            )
+        
+        with col2:
+            balanco = total_entradas - total_atual
+            st.metric(
+                "⚖️ Entradas vs Gastos",
+                formatar_valor(balanco),
+                delta=f"Entradas: {formatar_valor(total_entradas)}" if total_entradas > 0 else "Sem entradas"
+            )
+        
+        with col3:
+            if fatura_anterior:
+                delta_texto = "📈 Aumento" if variacao > 0 else "📉 Diminuição" if variacao < 0 else "🔄 Igual"
+                st.metric(
+                    "📊 Variação Mensal",
+                    f"{abs(percentual_variacao):.1f}%",
+                    delta=delta_texto
+                )
+            else:
+                st.metric(
+                    "📊 Variação Mensal",
+                    "Sem dados anteriores",
+                    delta=None
+                )
+        
+        # Mostrar detalhamento por categoria
+        st.write("### Detalhamento por Categoria")
 
         # Mostrar transações por categoria
         for categoria, total in totais_categoria.items():
@@ -1084,6 +1133,79 @@ elif authentication_status:
                                         st.rerun()
                         
                         st.markdown("---")
+
+        # Gráfico de Comparação por Categoria
+        st.write("### Comparação de Meses por Categoria")
+        
+        # Preparar dados para o gráfico
+        meses_dados = {}
+        categorias_todas = set()
+        
+        # Coletar dados de todas as faturas
+        for fatura in faturas:
+            mes_ano = f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}"
+            meses_dados[mes_ano] = {'mes': fatura['mes'], 'ano': fatura['ano']}
+            
+            # Processar transações da fatura
+            df_fatura = pd.DataFrame(fatura['transacoes'])
+            if not df_fatura.empty:
+                # Aplicar classificação
+                for i, transacao in enumerate(fatura['transacoes']):
+                    if 'categoria' in transacao:
+                        df_fatura.loc[i, 'categoria'] = transacao['categoria']
+                    else:
+                        df_fatura.loc[i, 'categoria'] = classificar_transacao(transacao['descricao'])
+                
+                # Calcular totais por categoria
+                totais_fatura = df_fatura.groupby('categoria')['valor'].sum()
+                meses_dados[mes_ano]['categorias'] = totais_fatura.to_dict()
+                categorias_todas.update(totais_fatura.index.tolist())
+        
+        # Ordenar meses cronologicamente
+        meses_ordenados = sorted(meses_dados.keys(), key=lambda x: (meses_dados[x]['ano'], meses_dados[x]['mes']))
+        
+        # Preparar dados para o gráfico
+        if len(meses_ordenados) >= 2:  # Só mostrar se tiver pelo menos 2 meses
+            fig = go.Figure()
+            
+            # Cores para as categorias
+            cores = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F']
+            
+            # Criar barras para cada categoria
+            for i, categoria in enumerate(sorted(categorias_todas)):
+                valores = []
+                for mes in meses_ordenados:
+                    valor = meses_dados[mes].get('categorias', {}).get(categoria, 0)
+                    valores.append(valor)
+                
+                fig.add_trace(go.Bar(
+                    name=categoria,
+                    x=meses_ordenados,
+                    y=valores,
+                    text=[formatar_valor(v) if v > 0 else '' for v in valores],
+                    textposition='auto',
+                    marker_color=cores[i % len(cores)]
+                ))
+            
+            fig.update_layout(
+                title="Comparação de Gastos por Categoria",
+                xaxis_title="Mês/Ano",
+                yaxis_title="Valor (R$)",
+                barmode='group',
+                height=600,
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("📊 Gráfico de comparação será exibido quando houver dados de pelo menos 2 meses.")
 
     # Na aba de Parcelas Futuras
     with tab_parcelas:
