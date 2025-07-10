@@ -28,6 +28,7 @@ import time
 import os
 from dateutil.relativedelta import relativedelta
 from collections import defaultdict
+import hashlib
 
 # Lista de categorias padrão
 CATEGORIAS_PADRAO = ["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras"]
@@ -594,6 +595,13 @@ elif authentication_status:
         st.success('✅ Gasto fixo removido com sucesso!')
         st.experimental_rerun()
 
+    def gerar_chave_transacao(transacao, prefixo=""):
+        """Gera uma chave única para a transação baseada em seus atributos"""
+        # Criar uma string com todos os atributos relevantes
+        chave_base = f"{transacao['descricao']}_{transacao['valor']}_{prefixo}"
+        # Gerar um hash curto (8 caracteres) para garantir unicidade
+        return hashlib.md5(chave_base.encode()).hexdigest()[:8]
+
     # Criar tabs
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -765,8 +773,11 @@ elif authentication_status:
                 transacoes_categoria = [t for t in fatura_atual['transacoes'] 
                                       if t['categoria'] == categoria]
                 
-                for transacao in transacoes_categoria:
+                for idx, transacao in enumerate(transacoes_categoria):
                     col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+                    
+                    # Gerar chave única para esta transação
+                    chave_transacao = gerar_chave_transacao(transacao, str(idx))
                     
                     with col1:
                         st.write(transacao['descricao'])
@@ -777,12 +788,12 @@ elif authentication_status:
                             "Categoria",
                             options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "ENTRADA"],
                             index=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "ENTRADA"].index(transacao['categoria']),
-                            key=f"cat_{transacao['descricao']}_{transacao['valor']}"
+                            key=f"cat_{chave_transacao}"
                         )
                     with col4:
                         col4_1, col4_2 = st.columns([1, 1])
                         with col4_1:
-                            if st.button("✏️", key=f"edit_{transacao['descricao']}_{transacao['valor']}"):
+                            if st.button("✏️", key=f"edit_{chave_transacao}"):
                                 # Salvar a categoria atual para manter aberta
                                 st.session_state.categoria_aberta = categoria
                                 editar_categoria_transacao(
@@ -794,7 +805,7 @@ elif authentication_status:
                                 )
                                 st.rerun()
                         with col4_2:
-                            if st.button("🗑️", key=f"del_{transacao['descricao']}_{transacao['valor']}"):
+                            if st.button("🗑️", key=f"del_{chave_transacao}"):
                                 # Salvar a categoria atual para manter aberta
                                 st.session_state.categoria_aberta = categoria
                                 remover_transacao(
