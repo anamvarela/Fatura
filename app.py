@@ -100,6 +100,16 @@ def inicializar_classificacoes_base():
     if not os.path.exists('classificacoes.json'):
         # Lista de estabelecimentos conhecidos
         classificacoes = {
+            # Transporte
+            '99 app': 'Transporte',
+            '99app': 'Transporte',
+            '99*app': 'Transporte',
+            '99 *app': 'Transporte',
+            '99* app': 'Transporte',
+            '99 * app': 'Transporte',
+            '99app*': 'Transporte',
+            '99 app*': 'Transporte',
+            
             # Restaurantes
             'abbraccio leblon': 'Alimentação',
             'absurda confeitaria': 'Alimentação',
