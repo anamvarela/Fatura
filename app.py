@@ -559,7 +559,7 @@ elif authentication_status:
         
         # Transporte
         if any(palavra in descricao for palavra in [
-            'uber', '99 pop', '99pop', 'taxi', 'táxi', 'combustivel', 'combustível',
+            'uber', '99app', '99 app', '99app *99app', '99 pop', '99pop', 'taxi', 'táxi', 'combustivel', 'combustível',
             'estacionamento', 'metro', 'metrô', 'onibus', 'ônibus', 'bilhete',
             'posto', 'gasolina', 'etanol', 'alcool', 'álcool', 'uber*', 'uber x'
         ]):
