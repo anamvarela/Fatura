@@ -599,43 +599,7 @@ def reaplicar_regras_todas_transacoes():
     salvar_dados(dados)
     return transacoes_atualizadas
 
-def limpar_categoria_entrada():
-    """
-    Remove qualquer categoria ENTRADA que possa existir nos dados e move essas transações para entradas
-    """
-    dados = carregar_dados()
-    transacoes_movidas = 0
-    entradas = dados.get('entradas', [])
-    
-    # Processar todas as faturas
-    for fatura in dados.get('faturas', []):
-        transacoes_para_remover = []
-        
-        for i, transacao in enumerate(fatura.get('transacoes', [])):
-            # Se a transação tem categoria ENTRADA, mover para entradas
-            if transacao.get('categoria') == 'ENTRADA':
-                entrada = {
-                    'descricao': transacao['descricao'],
-                    'valor': transacao['valor'],
-                    'mes': fatura['mes'],
-                    'ano': fatura['ano'],
-                    'tipo': 'Desconto/Estorno'
-                }
-                entradas.append(entrada)
-                transacoes_para_remover.append(i)
-                transacoes_movidas += 1
-                print(f"Movendo para entradas: {transacao['descricao']}")
-        
-        # Remover transações que foram movidas para entradas
-        for i in reversed(transacoes_para_remover):
-            del fatura['transacoes'][i]
-    
-    # Atualizar entradas nos dados
-    dados['entradas'] = entradas
-    
-    # Salvar os dados atualizados
-    salvar_dados(dados)
-    return transacoes_movidas
+
 
 # Configuração da página
 st.set_page_config(
@@ -1133,16 +1097,6 @@ elif authentication_status:
                         transacoes_atualizadas = reaplicar_regras_todas_transacoes()
                         st.success(f"✅ {transacoes_atualizadas} transações foram atualizadas!")
                         st.rerun()
-                
-                # Botão para limpar categoria ENTRADA
-                if st.button("🧹 Limpar Categoria ENTRADA", use_container_width=True):
-                    with st.spinner("Limpando categoria ENTRADA..."):
-                        transacoes_movidas = limpar_categoria_entrada()
-                        if transacoes_movidas > 0:
-                            st.success(f"✅ {transacoes_movidas} transações movidas para 'Entradas do Mês'!")
-                        else:
-                            st.info("ℹ️ Nenhuma transação com categoria ENTRADA encontrada.")
-                        st.rerun()
         
         # Carregar dados
         dados = carregar_dados()
@@ -1305,11 +1259,21 @@ elif authentication_status:
                         # Se o botão de edição foi clicado, mostrar o formulário
                         if st.session_state.get(f'editing_{idx}', False):
                             with st.form(f"form_transacao_{idx}", clear_on_submit=True):
+                                # Garantir que a categoria existe na lista
+                                categoria_atual = transacao['categoria']
+                                try:
+                                    index_categoria = categorias.index(categoria_atual)
+                                except ValueError:
+                                    # Se a categoria não existir, adicionar à lista e usar como índice
+                                    categorias.append(categoria_atual)
+                                    salvar_categorias(categorias)
+                                    index_categoria = len(categorias) - 1
+                                
                                 nova_categoria = st.selectbox(
                                     "Categoria",
                                     options=categorias,  # Usar categorias do arquivo
                                     key=f"cat_{idx}",
-                                    index=categorias.index(transacao['categoria'])
+                                    index=index_categoria
                                 )
                                 
                                 is_fixo = st.checkbox("Marcar como gasto fixo", key=f"fix_{idx}")
