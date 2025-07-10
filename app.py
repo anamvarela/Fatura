@@ -1013,17 +1013,31 @@ elif authentication_status:
         
         with col3:
             if fatura_anterior:
-                cor_variacao = "normal"
+                # Criar texto com cor baseada na variação
                 if variacao > 0:
-                    cor_variacao = "inverse"  # Vermelho (ruim - gastou mais)
+                    # Vermelho se gastou mais
+                    cor_html = "color: red;"
+                    sinal = "+"
                 elif variacao < 0:
-                    cor_variacao = "normal"   # Verde (bom - gastou menos)
+                    # Verde se gastou menos
+                    cor_html = "color: green;"
+                    sinal = ""
+                else:
+                    cor_html = "color: gray;"
+                    sinal = ""
                 
                 st.metric(
                     "Variação Mensal",
-                    f"{percentual_variacao:+.1f}%",
-                    delta=variacao,
-                    delta_color=cor_variacao
+                    f"{sinal}{percentual_variacao:.1f}%"
+                )
+                
+                # Adicionar explicação colorida
+                st.markdown(
+                    f"<div style='{cor_html} font-size: 12px; text-align: center;'>"
+                    f"{'Gasto maior' if variacao > 0 else 'Gasto menor' if variacao < 0 else 'Igual'} "
+                    f"({formatar_valor(abs(variacao))})"
+                    f"</div>",
+                    unsafe_allow_html=True
                 )
             else:
                 st.metric(
