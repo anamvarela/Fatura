@@ -777,7 +777,10 @@ elif authentication_status:
         
         # Calcular totais por categoria
         totais_categoria = df.groupby('categoria')['valor'].sum().sort_values(ascending=False)
-        
+
+        # Calcular total geral
+        total_atual = totais_categoria.sum()
+
         # Mostrar transações por categoria
         for categoria, total in totais_categoria.items():
             with st.expander(f"📁 {categoria} - {formatar_valor(total)} ({(total/total_atual*100):.1f}%) - {len(df[df['categoria'] == categoria])} transações"):
