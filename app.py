@@ -566,6 +566,28 @@ def limpar_fatura(mes, ano):
     time.sleep(0.5)
     st.rerun()
 
+def reaplicar_regras_todas_transacoes():
+    """
+    Reaplica todas as regras de classificação às transações existentes
+    """
+    dados = carregar_dados()
+    transacoes_atualizadas = 0
+    
+    # Aplicar regras às faturas
+    for fatura in dados.get('faturas', []):
+        for transacao in fatura.get('transacoes', []):
+            categoria_original = transacao.get('categoria', '')
+            categoria_nova = classificar_transacao(transacao['descricao'])
+            
+            # Se a categoria mudou, atualizar
+            if categoria_original != categoria_nova:
+                transacao['categoria'] = categoria_nova
+                transacoes_atualizadas += 1
+    
+    # Salvar os dados atualizados
+    salvar_dados(dados)
+    return transacoes_atualizadas
+
 # Configuração da página
 st.set_page_config(
     page_title="Análise Faturas Nubank",
@@ -586,12 +608,11 @@ authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
     config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config.get('preauthorized', [])
+    config['cookie']['expiry_days']
 )
 
 # Adicionar login
-name, authentication_status, username = authenticator.login('Login', 'main')
+name, authentication_status, username = authenticator.login('Login')
 
 if authentication_status == False:
     st.error('Username/password is incorrect')
@@ -607,7 +628,7 @@ elif authentication_status:
     
     # Adicionar logout na sidebar
     with st.sidebar:
-        authenticator.logout('Logout', 'sidebar')
+        authenticator.logout('Logout')
     
     # Título principal
     st.markdown(f"<h1 class='main-header'>Análise</h1>", unsafe_allow_html=True)
@@ -1057,6 +1078,29 @@ elif authentication_status:
                 else:
                     st.info("Nenhuma regra automática criada ainda.")
                     st.write("Use a aba 'Regras Automáticas' para criar sua primeira regra!")
+                
+                # Botão para reaplicar regras às transações existentes
+                st.markdown("---")
+                st.write("**Aplicar Regras às Transações Existentes**")
+                st.info("⚠️ Esta ação irá reaplicar todas as regras às transações já cadastradas, atualizando suas categorias.")
+                
+                col1, col2 = st.columns([1, 1])
+                with col1:
+                    if st.button("🔄 Reaplicar Regras", type="primary"):
+                        with st.spinner("Atualizando transações..."):
+                            transacoes_atualizadas = reaplicar_regras_todas_transacoes()
+                            if transacoes_atualizadas > 0:
+                                st.success(f"✓ {transacoes_atualizadas} transações atualizadas com sucesso!")
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.info("Nenhuma transação precisou ser atualizada.")
+                
+                with col2:
+                    st.write("**Como funciona:**")
+                    st.write("- Analisa todas as transações")
+                    st.write("- Aplica regras personalizadas")
+                    st.write("- Atualiza categorias automaticamente")
         
 
         
