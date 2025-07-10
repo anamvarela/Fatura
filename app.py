@@ -92,8 +92,37 @@ def remover_transacao(fatura_mes, fatura_ano, descricao, valor):
     
     salvar_dados(dados)
 
+def carregar_classificacoes_salvas():
+    """
+    Carrega o dicionário de classificações já realizadas.
+    """
+    try:
+        with open('classificacoes.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+def salvar_classificacoes(classificacoes):
+    """
+    Salva o dicionário de classificações em arquivo.
+    """
+    with open('classificacoes.json', 'w', encoding='utf-8') as f:
+        json.dump(classificacoes, f, ensure_ascii=False, indent=4)
+
+def atualizar_classificacao_salva(descricao, categoria):
+    """
+    Atualiza a base de classificações com uma nova classificação.
+    """
+    classificacoes = carregar_classificacoes_salvas()
+    # Normaliza a descrição para evitar duplicatas por diferenças de case
+    descricao_norm = descricao.lower().strip()
+    classificacoes[descricao_norm] = categoria
+    salvar_classificacoes(classificacoes)
+
 def editar_categoria_transacao(fatura_mes, fatura_ano, descricao, valor, nova_categoria):
-    """Edita a categoria de uma transação específica"""
+    """
+    Edita a categoria de uma transação e salva a nova classificação para uso futuro.
+    """
     dados = carregar_dados()
     faturas = dados.get('faturas', [])
     
@@ -116,218 +145,136 @@ def editar_categoria_transacao(fatura_mes, fatura_ano, descricao, valor, nova_ca
                         fatura['transacoes'].remove(transacao)
                     else:
                         transacao['categoria'] = nova_categoria
+                        # Salvar a classificação para uso futuro
+                        atualizar_classificacao_salva(descricao, nova_categoria)
                     break
     
     salvar_dados(dados)
 
 def classificar_transacao(descricao):
-    """Classifica a transação baseado na descrição e regras específicas"""
+    """
+    Classifica automaticamente uma transação com base em sua descrição.
+    Primeiro verifica nas classificações salvas, depois usa as regras automáticas.
+    """
     descricao = descricao.lower().strip()
     
-    # Verificar se é desconto ou estorno
-    if 'desconto' in descricao or 'estorno' in descricao:
-        return "ENTRADA"
-    
-    # Dicionário de estabelecimentos conhecidos
-    estabelecimentos = {
-        "Alimentação": {
-            # Delivery
-            'ifood': 'delivery',
-            'rappi': 'delivery',
-            'uber eats': 'delivery',
-            'james delivery': 'delivery',
-            'aiqfome': 'delivery',
-            '99 food': 'delivery',
-            # Restaurantes
-            'outback': 'restaurante',
-            'mcdonalds': 'fast food',
-            'mc donalds': 'fast food',
-            'burger king': 'fast food',
-            'bk': 'fast food',
-            'subway': 'fast food',
-            'habibs': 'fast food',
-            'spoleto': 'restaurante',
-            'giraffas': 'restaurante',
-            'madero': 'restaurante',
-            'china in box': 'restaurante',
-            'dominos': 'pizzaria',
-            'pizza hut': 'pizzaria',
-            # Supermercados
-            'carrefour': 'supermercado',
-            'extra': 'supermercado',
-            'pao de acucar': 'supermercado',
-            'assai': 'supermercado',
-            'mundial': 'supermercado',
-            'guanabara': 'supermercado',
-            'zona sul': 'supermercado',
-            'hortifruti': 'mercado',
-            'supermarket': 'supermercado',
-            'mercado': 'mercado',
-            'supermercado': 'supermercado',
-            # Padarias/Cafés
-            'starbucks': 'café',
-            'padaria': 'padaria',
-            'confeitaria': 'padaria',
-            'doceria': 'doces',
-            'sorveteria': 'sorvetes'
+    # Primeiro verifica se já existe uma classificação salva
+    classificacoes_salvas = carregar_classificacoes_salvas()
+    if descricao in classificacoes_salvas:
+        return classificacoes_salvas[descricao]
+
+    # Dicionário de estabelecimentos por categoria
+    categorias = {
+        'Alimentação': {
+            'restaurantes': [
+                'restaurante', 'rest', 'churrascaria', 'pizzaria', 'pizza',
+                'hamburger', 'burger', 'lanchonete', 'bar', 'boteco',
+                'galeto', 'padaria', 'confeitaria', 'doceria', 'cafeteria',
+                'cafe', 'bistro', 'cantina', 'buffet', 'grill', 'espeto',
+                'pastelaria', 'pastel', 'rotisserie', 'sushi', 'japanese',
+                'china', 'chinesa', 'thai', 'mexicano', 'árabe', 'arabe',
+                'absurda', 'ferro e farinha'
+            ],
+            'delivery': [
+                'ifood', 'rappi', 'uber eats', 'delivery', 'entrega',
+                '99 food', 'james delivery', 'aiqfome', 'deliverydireto'
+            ],
+            'mercado': [
+                'mercado', 'supermercado', 'hortifruti', 'sacolao', 'feira',
+                'mercearia', 'atacado', 'atacadao', 'carrefour', 'pao de acucar',
+                'extra', 'dia', 'assai', 'sams club', 'makro', 'tenda',
+                'quitanda', 'adega', 'emporio', 'armazem', 'minimercado',
+                'mercadinho', 'acougue', 'açougue', 'peixaria', 'padaria',
+                'mercadolivre*14produt', 'mercadolivre*', 'mercado livre',
+                'supernosso', 'verdemar', 'epa', 'super', 'mart'
+            ]
         },
-        "Transporte": {
-            # Apps
-            'uber': 'transporte',
-            '99 pop': 'transporte',
-            '99taxi': 'taxi',
-            '99*': 'transporte',
-            'cabify': 'transporte',
-            # Combustível
-            'ipiranga': 'posto',
-            'shell': 'posto',
-            'br mania': 'posto',
-            'petrobras': 'posto',
-            'ale': 'posto',
-            'posto': 'combustível',
-            # Transporte público
-            'metro rio': 'metrô',
-            'supervia': 'trem',
-            'brt': 'ônibus',
-            'riocard': 'transporte público',
-            'bilhete unico': 'transporte público'
+        'Transporte': {
+            'apps': [
+                'uber', '99 taxi', '99taxi', '99 pop', '99pop', 'cabify',
+                'taxi', 'táxi', 'transfer', 'shuttle', 'buser'
+            ],
+            'combustivel': [
+                'posto', 'shell', 'ipiranga', 'petrobras', 'br posto',
+                'ale', 'combustivel', 'gasolina', 'etanol', 'diesel'
+            ],
+            'transporte_publico': [
+                'metro', 'metrô', 'trem', 'onibus', 'ônibus', 'brt',
+                'vlt', 'bilhete unico', 'bilhete único', 'cartao riocard',
+                'cartão riocard', 'bom', 'bem', 'metrocard', 'subway'
+            ],
+            'estacionamento': [
+                'estacionamento', 'parking', 'zona azul', 'parquimetro',
+                'estapar', 'multipark', 'autopark'
+            ]
         },
-        "Entretenimento": {
-            # Streaming
-            'netflix': 'streaming',
-            'spotify': 'streaming música',
-            'youtube': 'streaming',
-            'prime video': 'streaming',
-            'amazon prime': 'streaming',
-            'disney+': 'streaming',
-            'hbo max': 'streaming',
-            'globoplay': 'streaming',
-            'paramount+': 'streaming',
-            'apple tv': 'streaming',
-            # Jogos
-            'playstation': 'games',
-            'psn': 'games',
-            'xbox': 'games',
-            'microsoft store': 'software',
-            'steam': 'games',
-            'epic games': 'games',
-            'nintendo': 'games',
-            'battle.net': 'games',
-            'ubisoft': 'games',
-            'ea games': 'games',
-            'origin': 'games',
-            # Cultura
-            'cinemark': 'cinema',
-            'kinoplex': 'cinema',
-            'cinema': 'cinema',
-            'teatro': 'teatro',
-            'show': 'show',
-            'ingresso': 'evento',
-            'ticketmaster': 'evento',
-            'eventim': 'evento',
-            'sympla': 'evento'
+        'Entretenimento': {
+            'streaming': [
+                'netflix', 'spotify', 'amazon prime', 'disney+', 'hbo max',
+                'youtube premium', 'deezer', 'apple music', 'tidal',
+                'paramount+', 'globoplay', 'crunchyroll', 'twitch'
+            ],
+            'jogos': [
+                'steam', 'playstation', 'psn', 'xbox', 'nintendo',
+                'epic games', 'battle.net', 'origin', 'uplay', 'gog'
+            ],
+            'eventos': [
+                'cinema', 'teatro', 'show', 'evento', 'ingresso',
+                'tickets', 'sympla', 'eventbrite', 'ticket360',
+                'ingressorapido', 'livepass', 'ticketmaster'
+            ]
         },
-        "Self Care": {
-            # Farmácias
-            'drogasil': 'farmácia',
-            'pacheco': 'farmácia',
-            'raia': 'farmácia',
-            'farmacia': 'farmácia',
-            'drogaria': 'farmácia',
-            # Saúde
-            'clinica': 'saúde',
-            'hospital': 'saúde',
-            'laboratorio': 'exames',
-            'exame': 'saúde',
-            'medico': 'consulta',
-            'consulta': 'saúde',
-            # Bem-estar
-            'academia': 'fitness',
-            'smart fit': 'academia',
-            'bodytech': 'academia',
-            'crossfit': 'fitness',
-            'pilates': 'fitness',
-            'yoga': 'fitness',
-            'spa': 'bem-estar',
-            'massagem': 'bem-estar',
-            'salao': 'beleza',
-            'beleza': 'estética'
+        'Self Care': {
+            'saude': [
+                'farmacia', 'drogaria', 'droga', 'pacheco', 'raia',
+                'farmácia', 'remedios', 'remédios', 'medicamentos',
+                'consulta', 'medico', 'médico', 'dentista', 'psicólogo',
+                'psicologo', 'terapeuta', 'fisioterapeuta', 'nutricionista',
+                'exame', 'laboratorio', 'laboratório', 'clinica', 'clínica',
+                'hospital', 'plano de saude', 'plano de saúde'
+            ],
+            'beleza': [
+                'salao', 'salão', 'cabelereiro', 'cabeleireiro', 'manicure',
+                'pedicure', 'spa', 'massagem', 'estetica', 'estética',
+                'barbearia', 'barber', 'depilacao', 'depilação', 'beauty'
+            ],
+            'academia': [
+                'academia', 'gym', 'crossfit', 'pilates', 'yoga',
+                'personal', 'trainer', 'box', 'fitness', 'smart fit',
+                'bodytech', 'selfit'
+            ]
         },
-        "Compras": {
-            # E-commerce
-            'amazon': 'e-commerce',
-            'mercado livre': 'e-commerce',
-            'americanas': 'loja',
-            'magalu': 'loja',
-            'magazine luiza': 'loja',
-            'shopee': 'e-commerce',
-            'aliexpress': 'e-commerce',
-            'shein': 'e-commerce',
-            'wish': 'e-commerce',
-            'ebay': 'e-commerce',
-            'kabum': 'eletrônicos',
-            'submarino': 'e-commerce',
-            # Lojas físicas
-            'renner': 'vestuário',
-            'riachuelo': 'vestuário',
-            'cea': 'vestuário',
-            'c&a': 'vestuário',
-            'marisa': 'vestuário',
-            'leader': 'vestuário',
-            'hering': 'vestuário',
-            'zara': 'vestuário',
-            'forever 21': 'vestuário',
-            'h&m': 'vestuário',
-            # Esporte
-            'decathlon': 'esporte',
-            'centauro': 'esporte',
-            'nike': 'esporte',
-            'adidas': 'esporte',
-            'puma': 'esporte',
-            'netshoes': 'esporte',
-            # Cosméticos
-            'natura': 'cosméticos',
-            'avon': 'cosméticos',
-            'boticario': 'cosméticos',
-            'sephora': 'cosméticos',
-            'mac': 'cosméticos',
-            # Casa
-            'leroy merlin': 'casa',
-            'c&c': 'construção',
-            'tok&stok': 'móveis',
-            'camicado': 'utilidades',
-            'etna': 'móveis',
-            'mobly': 'móveis',
-            # Eletrônicos
-            'fast shop': 'eletrônicos',
-            'ponto': 'eletrônicos',
-            'casas bahia': 'varejo',
-            'samsung': 'eletrônicos',
-            'apple': 'eletrônicos',
-            'xiaomi': 'eletrônicos'
+        'Compras': {
+            'vestuario': [
+                'renner', 'cea', 'c&a', 'riachuelo', 'marisa', 'hering',
+                'zara', 'forever 21', 'nike', 'adidas', 'puma', 'under armour',
+                'centauro', 'decathlon', 'netshoes', 'dafiti', 'shop', 'store'
+            ],
+            'eletronicos': [
+                'amazon', 'americanas', 'submarino', 'magalu',
+                'magazine luiza', 'casas bahia', 'ponto frio', 'fastshop',
+                'kabum', 'aliexpress', 'shopee', 'mercado livre'
+            ],
+            'casa': [
+                'leroy merlin', 'telhanorte', 'c&c', 'tok&stok', 'etna',
+                'camicado', 'mobly', 'madeira', 'madeiramadeira',
+                'casa', 'lar', 'home', 'decoração', 'moveis', 'móveis'
+            ]
         }
     }
-    
-    # Procurar por estabelecimentos conhecidos
-    for categoria, estabelecimentos_dict in estabelecimentos.items():
-        for nome, tipo in estabelecimentos_dict.items():
-            if nome in descricao:
+
+    # Verificar se é uma entrada
+    palavras_entrada = ['reembolso', 'estorno', 'cashback', 'rendimento', 'pagamento recebido', 'transferencia recebida']
+    if any(palavra in descricao for palavra in palavras_entrada):
+        return "ENTRADA"
+
+    # Procurar por correspondências nas categorias e subcategorias
+    for categoria, subcategorias in categorias.items():
+        for subcategoria, palavras_chave in subcategorias.items():
+            if any(palavra in descricao for palavra in palavras_chave):
                 return categoria
-    
-    # Se não encontrou estabelecimento específico, procura por palavras-chave genéricas
-    palavras_chave = {
-        "Alimentação": ['restaurante', 'food', 'burger', 'pizza', 'bar', 'cafeteria', 'padaria'],
-        "Transporte": ['uber', 'taxi', 'táxi', 'combustivel', 'combustível', 'estacionamento', 'pedágio'],
-        "Entretenimento": ['cinema', 'teatro', 'show', 'ingresso', 'game', 'jogo'],
-        "Self Care": ['academia', 'farmacia', 'farmácia', 'clinica', 'clínica', 'medico', 'médico'],
-        "Compras": ['loja', 'store', 'shop', 'shopping']
-    }
-    
-    for categoria, palavras in palavras_chave.items():
-        if any(palavra in descricao for palavra in palavras):
-            return categoria
-    
-    return "Compras"  # Categoria padrão
+
+    return "Outros"
 
 def adicionar_fatura(fatura):
     """Adiciona uma nova fatura ao histórico"""
