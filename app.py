@@ -994,32 +994,41 @@ elif authentication_status:
         
         with col1:
             st.metric(
-                "💰 Gasto Total",
-                formatar_valor(total_atual),
-                delta=f"{formatar_valor(variacao)} ({percentual_variacao:+.1f}%)" if fatura_anterior else None
+                "Gasto Total",
+                formatar_valor(total_atual)
             )
         
         with col2:
-            balanco = total_entradas - total_atual
-            st.metric(
-                "⚖️ Entradas vs Gastos",
-                formatar_valor(balanco),
-                delta=f"Entradas: {formatar_valor(total_entradas)}" if total_entradas > 0 else "Sem entradas"
-            )
-        
-        with col3:
-            if fatura_anterior:
-                delta_texto = "📈 Aumento" if variacao > 0 else "📉 Diminuição" if variacao < 0 else "🔄 Igual"
+            if total_entradas > 0:
+                percentual_utilizado = (total_atual / total_entradas) * 100
                 st.metric(
-                    "📊 Variação Mensal",
-                    f"{abs(percentual_variacao):.1f}%",
-                    delta=delta_texto
+                    "% Utilizado das Entradas",
+                    f"{percentual_utilizado:.1f}%"
                 )
             else:
                 st.metric(
-                    "📊 Variação Mensal",
-                    "Sem dados anteriores",
-                    delta=None
+                    "% Utilizado das Entradas",
+                    "Sem entradas registradas"
+                )
+        
+        with col3:
+            if fatura_anterior:
+                cor_variacao = "normal"
+                if variacao > 0:
+                    cor_variacao = "inverse"  # Vermelho (ruim - gastou mais)
+                elif variacao < 0:
+                    cor_variacao = "normal"   # Verde (bom - gastou menos)
+                
+                st.metric(
+                    "Variação Mensal",
+                    f"{percentual_variacao:+.1f}%",
+                    delta=variacao,
+                    delta_color=cor_variacao
+                )
+            else:
+                st.metric(
+                    "Variação Mensal",
+                    "Sem dados anteriores"
                 )
         
         # Mostrar detalhamento por categoria
@@ -1168,28 +1177,30 @@ elif authentication_status:
         if len(meses_ordenados) >= 2:  # Só mostrar se tiver pelo menos 2 meses
             fig = go.Figure()
             
-            # Cores para as categorias
-            cores = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F']
+            # Tons de roxo para os meses
+            cores_roxo = ['#9966CC', '#8A2BE2', '#6A0DAD', '#4B0082', '#663399', '#7B68EE', '#9370DB', '#BA55D3']
             
-            # Criar barras para cada categoria
-            for i, categoria in enumerate(sorted(categorias_todas)):
+            # Criar barras para cada mês
+            for i, mes in enumerate(meses_ordenados):
                 valores = []
-                for mes in meses_ordenados:
+                categorias_ordenadas = sorted(categorias_todas)
+                
+                for categoria in categorias_ordenadas:
                     valor = meses_dados[mes].get('categorias', {}).get(categoria, 0)
                     valores.append(valor)
                 
                 fig.add_trace(go.Bar(
-                    name=categoria,
-                    x=meses_ordenados,
+                    name=mes,
+                    x=categorias_ordenadas,
                     y=valores,
                     text=[formatar_valor(v) if v > 0 else '' for v in valores],
                     textposition='auto',
-                    marker_color=cores[i % len(cores)]
+                    marker_color=cores_roxo[i % len(cores_roxo)]
                 ))
             
             fig.update_layout(
                 title="Comparação de Gastos por Categoria",
-                xaxis_title="Mês/Ano",
+                xaxis_title="Categoria",
                 yaxis_title="Valor (R$)",
                 barmode='group',
                 height=600,
