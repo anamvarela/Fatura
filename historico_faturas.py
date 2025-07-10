@@ -421,9 +421,9 @@ def classificar_transacao(descricao):
     if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
         return 'Transporte'
     
-    # VERIFICAÇÕES ESPECIAIS PARA COMPRAS (antes de verificar mercado)
+    # VERIFICAÇÕES ESPECIAIS PARA ROUPAS (antes de verificar mercado)
     if 'mercado livre' in descricao or 'mercadolivre' in descricao:
-        return 'Compras'
+        return 'Roupas'
     
     # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
     categoria_regra = aplicar_regras_classificacao(descricao)
@@ -461,7 +461,7 @@ def classificar_transacao(descricao):
             'terapia', 'psicolog', 'nutri', 'personal', 'pilates',
             'yoga', 'crossfit'
         ],
-        'Compras': [
+        'Roupas': [
             'amazon', 'americanas', 'magalu', 'mercado livre', 'shopee',
             'aliexpress', 'shein', 'renner', 'riachuelo', 'cea', 'zara',
             'nike', 'adidas', 'puma', 'centauro', 'decathlon', 'dafiti',

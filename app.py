@@ -31,7 +31,7 @@ from collections import defaultdict
 import hashlib
 
 # Lista de categorias padrão
-CATEGORIAS_PADRAO = ["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras"]
+CATEGORIAS_PADRAO = ["Alimentação", "Transporte", "Entretenimento", "Self Care", "Roupas"]
 
 def carregar_categorias():
     """Carrega as categorias do arquivo de configuração"""
@@ -296,9 +296,9 @@ def classificar_transacao(descricao):
         atualizar_classificacao_salva(descricao, 'Transporte')
         return 'Transporte'
     
-    # VERIFICAÇÕES ESPECIAIS PARA COMPRAS (antes de verificar mercado)
+    # VERIFICAÇÕES ESPECIAIS PARA ROUPAS (antes de verificar mercado)
     if 'mercado livre' in descricao or 'mercadolivre' in descricao:
-        return 'Compras'
+        return 'Roupas'
     
     # Verificar se contém "estorno" ou "desconto" (deve ser entrada, não despesa)
     if 'estorno' in descricao or 'desconto' in descricao:
@@ -399,7 +399,7 @@ def classificar_transacao(descricao):
             'academia', 'gym', 'crossfit', 'pilates', 'yoga', 'personal',
             'trainer', 'box', 'fitness', 'smart fit', 'bodytech', 'selfit'
         ],
-        'Compras': [
+        'Roupas': [
             # Lojas de departamento e vestuário (removido shop/store para evitar falsos positivos)
             'renner', 'cea', 'c&a', 'riachuelo', 'marisa', 'hering',
             'zara', 'forever 21', 'leader', 'h&m',
@@ -489,7 +489,7 @@ def remover_gasto_fixo_novo(descricao, valor):
 
 def corrigir_classificacoes_99app():
     """
-    Corrige todas as classificações incorretas do 99app que estão como 'Compras' para 'Transporte'.
+    Corrige todas as classificações incorretas do 99app que estão como 'Roupas' para 'Transporte'.
     """
     dados = carregar_dados()
     faturas = dados.get('faturas', [])
@@ -500,7 +500,7 @@ def corrigir_classificacoes_99app():
             descricao = transacao.get('descricao', '').lower()
             # Verifica se é uma transação do 99app e se está classificada incorretamente
             if ('99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao):
-                if transacao.get('categoria') == 'Compras':
+                if transacao.get('categoria') == 'Roupas':
                     transacao['categoria'] = 'Transporte'
                     corrigidas += 1
                     print(f"Corrigindo classificação de '{transacao['descricao']}' para Transporte")
@@ -512,7 +512,7 @@ def corrigir_classificacoes_99app():
 
 def corrigir_classificacoes_restaurantes():
     """
-    Corrige todas as classificações incorretas de restaurantes que estão como 'Compras' ou 'Outros' para 'Alimentação'.
+    Corrige todas as classificações incorretas de restaurantes que estão como 'Roupas' ou 'Outros' para 'Alimentação'.
     """
     dados = carregar_dados()
     faturas = dados.get('faturas', [])
@@ -537,7 +537,7 @@ def corrigir_classificacoes_restaurantes():
             
             # Verifica se é um restaurante e se está classificado incorretamente
             if any(rest in descricao for rest in restaurantes_conhecidos):
-                if categoria_atual in ['Compras', 'Outros']:
+                if categoria_atual in ['Roupas', 'Outros']:
                     transacao['categoria'] = 'Alimentação'
                     corrigidas += 1
                     print(f"Corrigindo classificação de '{transacao['descricao']}' para Alimentação")
@@ -546,6 +546,7 @@ def corrigir_classificacoes_restaurantes():
     
     salvar_dados(dados)
     return corrigidas
+
 
 def limpar_fatura(mes, ano):
     """
@@ -660,9 +661,9 @@ elif authentication_status:
             for linha in linhas:
                 if re.search(r'\d{2} [A-Z]{3}', linha):
                     try:
-                        # Ignorar linhas de IOF, totais e transações antecipadas
+                        # Ignorar linhas de IOF e totais
                         if any(termo in linha.lower() for termo in [
-                            'iof de', 'total de', 'pagamento em', 'antecipada'
+                            'iof de', 'total de', 'pagamento em'
                         ]):
                             continue
                             
@@ -722,9 +723,9 @@ elif authentication_status:
         if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
             return "Transporte"
         
-        # VERIFICAÇÕES ESPECIAIS PARA COMPRAS (antes de verificar mercado)
+        # VERIFICAÇÕES ESPECIAIS PARA ROUPAS (antes de verificar mercado)
         if 'mercado livre' in descricao or 'mercadolivre' in descricao:
-            return "Compras"
+            return "Roupas"
         
         # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
         categoria_regra = aplicar_regras_classificacao(descricao)
@@ -776,8 +777,8 @@ elif authentication_status:
         ]):
             return "Self Care"
         
-        # Compras (incluindo o que antes era "Outros")
-        return "Compras"
+        # Roupas (incluindo o que antes era "Outros")
+        return "Roupas"
 
     # Função auxiliar para formatar valores
     def formatar_valor(valor):
@@ -1365,8 +1366,8 @@ elif authentication_status:
             for transacao in fatura['transacoes']:
                 descricao = transacao['descricao'].lower()
                 
-                # Pular transações do 99app para evitar detecção incorreta de parcelas
-                if any(termo in descricao for termo in ['99app', '99 app', '99app *99app']):
+                # Pular transações do 99app e antecipadas para evitar detecção incorreta de parcelas
+                if any(termo in descricao for termo in ['99app', '99 app', '99app *99app', 'antecipada']):
                     continue
                 
                 # Procurar padrões de parcelas usando regex mais específica
@@ -1467,7 +1468,7 @@ elif authentication_status:
             with col3:
                 categoria = st.selectbox(
                     "Categoria",
-                    options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"]
+                                                options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Roupas", "Outros"]
                 )
             
             with col4:
