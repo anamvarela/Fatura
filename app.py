@@ -273,7 +273,7 @@ def classificar_transacao(descricao):
             'cartão riocard', 'bom', 'bem', 'metrocard',
             # Estacionamento
             'estacionamento', 'parking', 'zona azul', 'parquimetro',
-            'estapar', 'multipark', 'autopark'
+            'estapar', 'multipark', 'autopark','99'
         ],
         'Entretenimento': [
             # Streaming
