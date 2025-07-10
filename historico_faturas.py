@@ -278,7 +278,7 @@ def remover_entrada(mes, ano, valor, descricao, tipo):
                                e['ano'] == ano and 
                                abs(float(e['valor']) - valor) < 0.01 and
                                e['descricao'] == descricao and
-                               e['tipo'] == tipo)]
+                               e.get('tipo', 'Outros') == tipo)]
     salvar_dados(dados)
 
 def obter_entradas(mes, ano):

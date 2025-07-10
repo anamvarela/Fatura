@@ -860,7 +860,7 @@ elif authentication_status:
             df_entradas = pd.DataFrame([{
                 'Valor': formatar_valor(entrada['valor']),
                 'Descrição': entrada['descricao'],
-                'Tipo': entrada['tipo'],
+                'Tipo': entrada.get('tipo', 'Outros'),
                 'Ações': f"del_entrada_{idx}"
             } for idx, entrada in enumerate(entradas_existentes)])
             
@@ -873,7 +873,7 @@ elif authentication_status:
                 with col2:
                     st.write(entrada['descricao'])
                 with col3:
-                    st.write(entrada['tipo'])
+                    st.write(entrada.get('tipo', 'Outros'))
                 with col4:
                     if st.button("🗑️", key=f"del_entrada_{idx}", help="Deletar entrada"):
                         remover_entrada(
@@ -881,7 +881,7 @@ elif authentication_status:
                             entrada['ano'],
                             entrada['valor'],
                             entrada['descricao'],
-                            entrada['tipo']
+                            entrada.get('tipo', 'Outros')
                         )
                         st.rerun()
                         
