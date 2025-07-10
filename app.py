@@ -223,15 +223,15 @@ def classificar_transacao(descricao):
     """
     descricao = descricao.lower().strip()
     
+    # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
+    if '99' in descricao and ('app' in descricao or '*' in descricao):
+        print(f"DEBUG: Classificando '{descricao}' como Transporte devido à regra 99app")  # Debug
+        return 'Transporte'
+    
     # Primeiro verifica se já existe uma classificação salva
     classificacoes_salvas = carregar_classificacoes_salvas()
     if descricao in classificacoes_salvas:
         return classificacoes_salvas[descricao]
-
-    # Verificações específicas de alta prioridade
-    # 99 em qualquer formato vai para Transporte
-    if '99' in descricao:
-        return 'Transporte'
 
     # Verificar se é uma entrada
     palavras_entrada = ['reembolso', 'estorno', 'cashback', 'rendimento', 'pagamento recebido', 'transferencia recebida']
@@ -305,9 +305,9 @@ def classificar_transacao(descricao):
             'trainer', 'box', 'fitness', 'smart fit', 'bodytech', 'selfit'
         ],
         'Compras': [
-            # Lojas de departamento e vestuário
+            # Lojas de departamento e vestuário (removido shop/store para evitar falsos positivos)
             'renner', 'cea', 'c&a', 'riachuelo', 'marisa', 'hering',
-            'zara', 'forever 21', 'leader', 'h&m', 'shop', 'store', 'loja',
+            'zara', 'forever 21', 'leader', 'h&m',
             # Lojas de esporte
             'centauro', 'decathlon', 'netshoes', 'nike', 'adidas', 'puma',
             # Lojas online
