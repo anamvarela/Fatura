@@ -1,0 +1,1563 @@
+{
+    "faturas": {
+        "2025-05": {
+            "total_gasto": 8999.69,
+            "gastos_por_categoria": {
+                "Alimentação": 2583.7,
+                "Outros": 168.33,
+                "Self Care": 1203.38,
+                "Transporte": 2266.83,
+                "Roupas": 2777.45
+            },
+            "transacoes": [
+                {
+                    "Data": "02 MAI",
+                    "Descrição": "Uberbr Uber *Tembici H",
+                    "Valor": 4.0,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "02 MAI",
+                    "Descrição": "Track Field - Parcela 2/2",
+                    "Valor": 139.95,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "02 MAI",
+                    "Descrição": "7017 Barra Shopping - Parcela 2/2",
+                    "Valor": 399.25,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "02 MAI",
+                    "Descrição": "Vipeconceito - Parcela 2/3",
+                    "Valor": 56.33,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "02 MAI",
+                    "Descrição": "Drogaria Venancio - Parcela 2/3",
+                    "Valor": 370.0,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "02 MAI",
+                    "Descrição": "Uberbr Uber *Tembici H",
+                    "Valor": 6.9,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "02 MAI",
+                    "Descrição": "Uber *Lime Help.Uber.C",
+                    "Valor": 69.65,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "02 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 55.29,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "03 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 13.98,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "03 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 19.64,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "03 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 9.83,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "03 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 10.94,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "04 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 27.31,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "04 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 12.94,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "04 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 15.44,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "04 MAI",
+                    "Descrição": "Josefrancelinoda",
+                    "Valor": 10.0,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "04 MAI",
+                    "Descrição": "Jaques Janine",
+                    "Valor": 46.0,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "04 MAI",
+                    "Descrição": "Posto de S Marissol",
+                    "Valor": 322.4,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "04 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 44.25,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "05 MAI",
+                    "Descrição": "Choperiakaraoke",
+                    "Valor": 40.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "05 MAI",
+                    "Descrição": "Zig*Caza Lagoa",
+                    "Valor": 42.9,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "07 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 16.53,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "07 MAI",
+                    "Descrição": "Drogarias Pacheco",
+                    "Valor": 7.99,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "08 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 13.58,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "08 MAI",
+                    "Descrição": "Drogarias Pacheco",
+                    "Valor": 7.99,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "08 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 19.61,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "08 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 13.29,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "09 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 18.71,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "09 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 9.83,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "09 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 51.42,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "09 MAI",
+                    "Descrição": "Sephora Barra",
+                    "Valor": 472.5,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "09 MAI",
+                    "Descrição": "Davianastaciode",
+                    "Valor": 12.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "10 MAI",
+                    "Descrição": "Woods Wine Comercio",
+                    "Valor": 45.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "10 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 64.67,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "10 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 13.05,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "10 MAI",
+                    "Descrição": "99app *99app",
+                    "Valor": 37.1,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "10 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 21.97,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "11 MAI",
+                    "Descrição": "Eleninha",
+                    "Valor": 58.8,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "11 MAI",
+                    "Descrição": "Milho",
+                    "Valor": 12.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "11 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 13.08,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "11 MAI",
+                    "Descrição": "Padaria Oceanos",
+                    "Valor": 60.5,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "11 MAI",
+                    "Descrição": "Drogaria Venancio",
+                    "Valor": 129.99,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "11 MAI",
+                    "Descrição": "Espacolaser",
+                    "Valor": 218.33,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "11 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 15.48,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "11 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 53.46,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "12 MAI",
+                    "Descrição": "Eduardojorgecosta",
+                    "Valor": 13.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "12 MAI",
+                    "Descrição": "Jose",
+                    "Valor": 10.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "13 MAI",
+                    "Descrição": "Drogarias Pacheco",
+                    "Valor": 11.59,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "14 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 36.88,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "14 MAI",
+                    "Descrição": "Drogarias Pacheco",
+                    "Valor": 11.59,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "14 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 20.39,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "15 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 40.28,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "16 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 19.88,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "16 MAI",
+                    "Descrição": "99app *99app",
+                    "Valor": 50.6,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "16 MAI",
+                    "Descrição": "Vmpp Comercio e Confec",
+                    "Valor": 229.9,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "16 MAI",
+                    "Descrição": "Absurda Confeitaria",
+                    "Valor": 52.3,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "16 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 38.99,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "17 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 5.05,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "17 MAI",
+                    "Descrição": "Braseiro da Gavea",
+                    "Valor": 112.85,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "17 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 28.05,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "17 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 49.11,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "17 MAI",
+                    "Descrição": "Pavilhao Botafogo",
+                    "Valor": 171.4,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "17 MAI",
+                    "Descrição": "Casa do Pao de Queijo",
+                    "Valor": 26.5,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "18 MAI",
+                    "Descrição": "Lena Park",
+                    "Valor": 30.0,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "18 MAI",
+                    "Descrição": "Vuvu",
+                    "Valor": 51.52,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "18 MAI",
+                    "Descrição": "Voah - Parcela 1/2",
+                    "Valor": 289.95,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "18 MAI",
+                    "Descrição": "Stuzzi",
+                    "Valor": 154.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "19 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 21.26,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "19 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 66.47,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "20 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 19.86,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "21 MAI",
+                    "Descrição": "Mercadolivre*5produto",
+                    "Valor": 76.9,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "21 MAI",
+                    "Descrição": "Ec *2produtos",
+                    "Valor": 87.08,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "21 MAI",
+                    "Descrição": "Mercadolivre*2produto",
+                    "Valor": 341.0,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "21 MAI",
+                    "Descrição": "99app *99app",
+                    "Valor": 46.9,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "21 MAI",
+                    "Descrição": "Mercadolivre*5produto",
+                    "Valor": 309.7,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "22 MAI",
+                    "Descrição": "Absurda Confeitaria",
+                    "Valor": 19.5,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "22 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 17.75,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "22 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 41.92,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "23 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 37.18,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "23 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 38.18,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "23 MAI",
+                    "Descrição": "Bendita Chica",
+                    "Valor": 170.91,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "23 MAI",
+                    "Descrição": "Eleninha",
+                    "Valor": 80.23,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "24 MAI",
+                    "Descrição": "Dri",
+                    "Valor": 74.76,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "24 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 36.19,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 15.55,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 MAI",
+                    "Descrição": "Jobi",
+                    "Valor": 21.84,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "24 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 17.16,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 MAI",
+                    "Descrição": "99app *99app",
+                    "Valor": 20.9,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 7.29,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 23.64,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 5.25,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "25 MAI",
+                    "Descrição": "Scarpi",
+                    "Valor": 76.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "25 MAI",
+                    "Descrição": "Rappi*Kalunga Enc",
+                    "Valor": 33.18,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "26 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 24.06,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "26 MAI",
+                    "Descrição": "Wellhub Gympass Br Gym",
+                    "Valor": 399.9,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "26 MAI",
+                    "Descrição": "Megamatterg",
+                    "Valor": 10.9,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "27 MAI",
+                    "Descrição": "Smoov Barra Sucos",
+                    "Valor": 27.99,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "27 MAI",
+                    "Descrição": "Posi Mozza",
+                    "Valor": 380.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "28 MAI",
+                    "Descrição": "Katszu Bar",
+                    "Valor": 65.68,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "29 MAI",
+                    "Descrição": "Mercadolivre*7produto",
+                    "Valor": 520.96,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "29 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 4.08,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "29 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 15.52,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "29 MAI",
+                    "Descrição": "Braseiro da Gavea",
+                    "Valor": 104.35,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "29 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 63.35,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "29 MAI",
+                    "Descrição": "99app *99app",
+                    "Valor": 23.0,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "29 MAI",
+                    "Descrição": "99app *99app",
+                    "Valor": 53.2,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "29 MAI",
+                    "Descrição": "Openai *Chatgpt Subscr",
+                    "Valor": 118.43,
+                    "Categoria": "Outros"
+                },
+                {
+                    "Data": "31 MAI",
+                    "Descrição": "99app *99app",
+                    "Valor": 4.9,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "31 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 22.21,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "31 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 8.7,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "31 MAI",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 42.26,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "31 MAI",
+                    "Descrição": "Absurda Confeitaria",
+                    "Valor": 43.68,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "31 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 62.43,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "31 MAI",
+                    "Descrição": "Cabana",
+                    "Valor": 69.93,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "31 MAI",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 26.04,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "01 JUN",
+                    "Descrição": "Reserva 11 Beach Club",
+                    "Valor": 395.91,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "01 JUN",
+                    "Descrição": "Uber Uber *One Help.Ub",
+                    "Valor": 198.0,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "01 JUN",
+                    "Descrição": "Apple.Com/Bill",
+                    "Valor": 49.9,
+                    "Categoria": "Outros"
+                }
+            ],
+            "parcelas_futuras": [
+                {
+                    "mes": 6,
+                    "ano": 2025,
+                    "parcela": 3,
+                    "total_parcelas": 3,
+                    "valor": 56.33,
+                    "descricao": "Vipeconceito - Parcela 2/3",
+                    "categoria": "Roupas"
+                },
+                {
+                    "mes": 6,
+                    "ano": 2025,
+                    "parcela": 3,
+                    "total_parcelas": 3,
+                    "valor": 370.0,
+                    "descricao": "Drogaria Venancio - Parcela 2/3",
+                    "categoria": "Self Care"
+                },
+                {
+                    "mes": 6,
+                    "ano": 2025,
+                    "parcela": 2,
+                    "total_parcelas": 2,
+                    "valor": 289.95,
+                    "descricao": "Voah - Parcela 1/2",
+                    "categoria": "Roupas"
+                }
+            ],
+            "data_processamento": "2025-07-09 15:47:31"
+        },
+        "2025-06": {
+            "total_gasto": 7185.41,
+            "gastos_por_categoria": {
+                "Alimentação": 1481.33,
+                "Entretenimento": 333.41,
+                "Outros": 430.98,
+                "Self Care": 1319.01,
+                "Transporte": 1120.73,
+                "Roupas": 2499.95
+            },
+            "transacoes": [
+                {
+                    "Data": "02 JUN",
+                    "Descrição": "Drogaria Venancio - Parcela 3/3",
+                    "Valor": 370.0,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "02 JUN",
+                    "Descrição": "Vipeconceito - Parcela 3/3",
+                    "Valor": 56.33,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "02 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 24.38,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "02 JUN",
+                    "Descrição": "Voah - Parcela 2/2",
+                    "Valor": 289.95,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "03 JUN",
+                    "Descrição": "Absurda Confeitaria",
+                    "Valor": 18.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "03 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 49.36,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "04 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 70.32,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "04 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 16.05,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "04 JUN",
+                    "Descrição": "Katszu Bar",
+                    "Valor": 105.29,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "05 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 9.0,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "05 JUN",
+                    "Descrição": "Galeto Rainha Leblon",
+                    "Valor": 88.26,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "05 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 58.89,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 9.57,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 25.31,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Track Field",
+                    "Valor": 179.91,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 4.1,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Havaianas Leblon",
+                    "Valor": 8.0,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Abbraccio Leblon",
+                    "Valor": 64.78,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Garota do Leblon Resta",
+                    "Valor": 38.5,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Absurda Confeitaria",
+                    "Valor": 18.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 18.06,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "06 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 5.4,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "07 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 14.37,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "07 JUN",
+                    "Descrição": "Ferro e Farinha",
+                    "Valor": 135.8,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "07 JUN",
+                    "Descrição": "Galeto Leblon",
+                    "Valor": 43.12,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "07 JUN",
+                    "Descrição": "Drogaria Cristal",
+                    "Valor": 69.48,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "07 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 19.8,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "08 JUN",
+                    "Descrição": "Drogaria Venancio",
+                    "Valor": 67.88,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "08 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 12.43,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "08 JUN",
+                    "Descrição": "Drogarias Carioca",
+                    "Valor": 11.99,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "08 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 7.7,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "08 JUN",
+                    "Descrição": "Mercadolivre*14produt",
+                    "Valor": 580.39,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "09 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 32.92,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "09 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 16.24,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "09 JUN",
+                    "Descrição": "Zig*Encontro de Rodas",
+                    "Valor": 35.0,
+                    "Categoria": "Entretenimento"
+                },
+                {
+                    "Data": "10 JUN",
+                    "Descrição": "Zig *Encontro de Ro",
+                    "Valor": 38.5,
+                    "Categoria": "Entretenimento"
+                },
+                {
+                    "Data": "10 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 15.6,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "10 JUN",
+                    "Descrição": "Zara Home Brasil - Parcela 1/2",
+                    "Valor": 130.2,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "10 JUN",
+                    "Descrição": "Cla",
+                    "Valor": 51.0,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "11 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 10.8,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "11 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 13.5,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "11 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 10.92,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "11 JUN",
+                    "Descrição": "Espacolaser",
+                    "Valor": 218.33,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "11 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 10.45,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "11 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 8.82,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "11 JUN",
+                    "Descrição": "Mercato Mix Ii",
+                    "Valor": 26.9,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "11 JUN",
+                    "Descrição": "Estorno de \"Mercadolivre*14produt\" −",
+                    "Valor": 12.4,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "12 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 13.45,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "12 JUN",
+                    "Descrição": "Jpd Park",
+                    "Valor": 32.0,
+                    "Categoria": "Outros"
+                },
+                {
+                    "Data": "12 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 55.62,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "12 JUN",
+                    "Descrição": "la Guapa - Botafogo",
+                    "Valor": 33.18,
+                    "Categoria": "Outros"
+                },
+                {
+                    "Data": "12 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 15.09,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "13 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 26.1,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "13 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 34.44,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "13 JUN",
+                    "Descrição": "We Make Agency Ltda.",
+                    "Valor": 154.0,
+                    "Categoria": "Outros"
+                },
+                {
+                    "Data": "14 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 15.0,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "14 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 7.49,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "14 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 9.19,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "14 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 19.4,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "14 JUN",
+                    "Descrição": "Eleninha",
+                    "Valor": 54.24,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "15 JUN",
+                    "Descrição": "Casa do Alemao",
+                    "Valor": 53.5,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "15 JUN",
+                    "Descrição": "Garota do Leblon Resta",
+                    "Valor": 62.7,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "17 JUN",
+                    "Descrição": "Buddario",
+                    "Valor": 62.9,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "17 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 7.35,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "17 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 26.03,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "18 JUN",
+                    "Descrição": "Drogaria Cristal",
+                    "Valor": 17.0,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "18 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 8.1,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "18 JUN",
+                    "Descrição": "Drogaria Venancio",
+                    "Valor": 29.78,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "18 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 8.24,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "18 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 17.25,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "19 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 22.6,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "19 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 22.31,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "19 JUN",
+                    "Descrição": "Art Food Rio Bar e Res",
+                    "Valor": 40.32,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "20 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 10.12,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "20 JUN",
+                    "Descrição": "Amen Gavea",
+                    "Valor": 31.0,
+                    "Categoria": "Outros"
+                },
+                {
+                    "Data": "20 JUN",
+                    "Descrição": "Sua Academia",
+                    "Valor": 44.0,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "23 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 15.85,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "23 JUN",
+                    "Descrição": "Zig*Bud Zone Rj",
+                    "Valor": 40.0,
+                    "Categoria": "Entretenimento"
+                },
+                {
+                    "Data": "23 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 12.07,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 JUN",
+                    "Descrição": "Nama Restaurante",
+                    "Valor": 102.48,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "24 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 9.98,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 34.95,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 6.2,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "24 JUN",
+                    "Descrição": "Zona Sul Fl",
+                    "Valor": 9.92,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "24 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 15.4,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "25 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 21.8,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "25 JUN",
+                    "Descrição": "Tabacaria e Cafeteria",
+                    "Valor": 14.5,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "25 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 12.2,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "25 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 7.2,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "26 JUN",
+                    "Descrição": "Sephora Leblon - Parcela 1/2",
+                    "Valor": 298.0,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "26 JUN",
+                    "Descrição": "Wellhub Gympass Br Gym",
+                    "Valor": 399.9,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "26 JUN",
+                    "Descrição": "Eleninha",
+                    "Valor": 110.15,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "26 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 17.79,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "26 JUN",
+                    "Descrição": "Raiadrogasilsa",
+                    "Valor": 26.99,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "26 JUN",
+                    "Descrição": "Sk Acessorios",
+                    "Valor": 189.0,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "26 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 20.8,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "26 JUN",
+                    "Descrição": "Arezzo - Parcela 1/2",
+                    "Valor": 254.95,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "27 JUN",
+                    "Descrição": "99app *99app",
+                    "Valor": 22.9,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "27 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 10.32,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "27 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 6.93,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "28 JUN",
+                    "Descrição": "Restaurante Nanquim",
+                    "Valor": 95.48,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "28 JUN",
+                    "Descrição": "Zona Sul Fl",
+                    "Valor": 97.38,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "28 JUN",
+                    "Descrição": "Uber* Trip",
+                    "Valor": 9.03,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "28 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 8.28,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "29 JUN",
+                    "Descrição": "Garage Rio - Parcela 1/3",
+                    "Valor": 299.98,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "29 JUN",
+                    "Descrição": "Ingresso.Com",
+                    "Valor": 161.91,
+                    "Categoria": "Entretenimento"
+                },
+                {
+                    "Data": "29 JUN",
+                    "Descrição": "Openai *Chatgpt Subscr",
+                    "Valor": 113.9,
+                    "Categoria": "Outros"
+                },
+                {
+                    "Data": "29 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 58.12,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "29 JUN",
+                    "Descrição": "Raiadrogasilsa",
+                    "Valor": 63.66,
+                    "Categoria": "Self Care"
+                },
+                {
+                    "Data": "30 JUN",
+                    "Descrição": "Kinoplex Fashion Mall",
+                    "Valor": 58.0,
+                    "Categoria": "Entretenimento"
+                },
+                {
+                    "Data": "30 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 18.95,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "30 JUN",
+                    "Descrição": "Uber Uber *Trip Help.U",
+                    "Valor": 30.19,
+                    "Categoria": "Transporte"
+                },
+                {
+                    "Data": "30 JUN",
+                    "Descrição": "Galeto Leblon",
+                    "Valor": 188.11,
+                    "Categoria": "Alimentação"
+                },
+                {
+                    "Data": "01 JUL",
+                    "Descrição": "Apple.Com/Bill",
+                    "Valor": 66.9,
+                    "Categoria": "Outros"
+                },
+                {
+                    "Data": "01 JUL",
+                    "Descrição": "Mercadolivre*Presentes",
+                    "Valor": 30.19,
+                    "Categoria": "Roupas"
+                },
+                {
+                    "Data": "01 JUL",
+                    "Descrição": "Mercadolivre*4produtos",
+                    "Valor": 170.65,
+                    "Categoria": "Roupas"
+                }
+            ],
+            "parcelas_futuras": [
+                {
+                    "mes": 7,
+                    "ano": 2025,
+                    "parcela": 2,
+                    "total_parcelas": 2,
+                    "valor": 130.2,
+                    "descricao": "Zara Home Brasil - Parcela 1/2",
+                    "categoria": "Roupas"
+                },
+                {
+                    "mes": 7,
+                    "ano": 2025,
+                    "parcela": 2,
+                    "total_parcelas": 2,
+                    "valor": 298.0,
+                    "descricao": "Sephora Leblon - Parcela 1/2",
+                    "categoria": "Roupas"
+                },
+                {
+                    "mes": 7,
+                    "ano": 2025,
+                    "parcela": 2,
+                    "total_parcelas": 2,
+                    "valor": 254.95,
+                    "descricao": "Arezzo - Parcela 1/2",
+                    "categoria": "Roupas"
+                },
+                {
+                    "mes": 7,
+                    "ano": 2025,
+                    "parcela": 2,
+                    "total_parcelas": 3,
+                    "valor": 299.98,
+                    "descricao": "Garage Rio - Parcela 1/3",
+                    "categoria": "Roupas"
+                },
+                {
+                    "mes": 8,
+                    "ano": 2025,
+                    "parcela": 3,
+                    "total_parcelas": 3,
+                    "valor": 299.98,
+                    "descricao": "Garage Rio - Parcela 1/3",
+                    "categoria": "Roupas"
+                }
+            ],
+            "data_processamento": "2025-07-09 15:56:22"
+        }
+    },
+    "entradas": {
+        "2025-07": {
+            "salario_fixo": 10000.0,
+            "renda_extra": 0.0,
+            "total": 10000.0,
+            "data_atualizacao": "2025-07-09 15:21:47"
+        },
+        "2025-06": {
+            "salario_fixo": 10000.0,
+            "renda_extra": 2000.0,
+            "total": 12000.0,
+            "data_atualizacao": "2025-07-09 15:38:55"
+        },
+        "2025-05": {
+            "salario_fixo": 6000.0,
+            "renda_extra": 0.0,
+            "total": 6000.0,
+            "data_atualizacao": "2025-07-09 15:31:13"
+        }
+    },
+    "gastos_fixos": [
+        {
+            "descricao": "Espacolaser",
+            "valor": 218.33,
+            "categoria": "Self Care",
+            "data_adicao": "2025-07-09 16:28:48"
+        },
+        {
+            "descricao": "Aluguel",
+            "valor": 3250.0,
+            "categoria": "Outros",
+            "data_adicao": "2025-07-09 16:31:12"
+        },
+        {
+            "descricao": "Wellhub Gympass Br Gym",
+            "valor": 399.9,
+            "categoria": "Self Care",
+            "data_adicao": "2025-07-09 16:44:27"
+        },
+        {
+            "descricao": "Openai *Chatgpt Subscr",
+            "valor": 113.9,
+            "categoria": "Outros",
+            "data_adicao": "2025-07-09 16:45:05"
+        },
+        {
+            "descricao": "Apple.Com/Bill",
+            "valor": 66.9,
+            "categoria": "Outros",
+            "data_adicao": "2025-07-09 16:45:12"
+        }
+    ]
+}

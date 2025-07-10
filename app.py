@@ -599,6 +599,44 @@ def reaplicar_regras_todas_transacoes():
     salvar_dados(dados)
     return transacoes_atualizadas
 
+def limpar_categoria_entrada():
+    """
+    Remove qualquer categoria ENTRADA que possa existir nos dados e move essas transações para entradas
+    """
+    dados = carregar_dados()
+    transacoes_movidas = 0
+    entradas = dados.get('entradas', [])
+    
+    # Processar todas as faturas
+    for fatura in dados.get('faturas', []):
+        transacoes_para_remover = []
+        
+        for i, transacao in enumerate(fatura.get('transacoes', [])):
+            # Se a transação tem categoria ENTRADA, mover para entradas
+            if transacao.get('categoria') == 'ENTRADA':
+                entrada = {
+                    'descricao': transacao['descricao'],
+                    'valor': transacao['valor'],
+                    'mes': fatura['mes'],
+                    'ano': fatura['ano'],
+                    'tipo': 'Desconto/Estorno'
+                }
+                entradas.append(entrada)
+                transacoes_para_remover.append(i)
+                transacoes_movidas += 1
+                print(f"Movendo para entradas: {transacao['descricao']}")
+        
+        # Remover transações que foram movidas para entradas
+        for i in reversed(transacoes_para_remover):
+            del fatura['transacoes'][i]
+    
+    # Atualizar entradas nos dados
+    dados['entradas'] = entradas
+    
+    # Salvar os dados atualizados
+    salvar_dados(dados)
+    return transacoes_movidas
+
 # Configuração da página
 st.set_page_config(
     page_title="Análise Faturas Nubank",
@@ -1089,30 +1127,22 @@ elif authentication_status:
                     st.info("Nenhuma regra automática criada ainda.")
                     st.write("Use a aba 'Regras Automáticas' para criar sua primeira regra!")
                 
-                # Botão para reaplicar regras às transações existentes
-                st.markdown("---")
-                st.write("**Aplicar Regras às Transações Existentes**")
-                st.info("⚠️ Esta ação irá reaplicar todas as regras às transações já cadastradas, atualizando suas categorias.")
+                # Botão para reaplicar regras
+                if st.button("🔄 Reaplicar Regras a Todas as Transações", use_container_width=True):
+                    with st.spinner("Reaplicando regras..."):
+                        transacoes_atualizadas = reaplicar_regras_todas_transacoes()
+                        st.success(f"✅ {transacoes_atualizadas} transações foram atualizadas!")
+                        st.rerun()
                 
-                col1, col2 = st.columns([1, 1])
-                with col1:
-                    if st.button("🔄 Reaplicar Regras", type="primary"):
-                        with st.spinner("Atualizando transações..."):
-                            transacoes_atualizadas = reaplicar_regras_todas_transacoes()
-                            if transacoes_atualizadas > 0:
-                                st.success(f"✓ {transacoes_atualizadas} transações atualizadas com sucesso!")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.info("Nenhuma transação precisou ser atualizada.")
-                
-                with col2:
-                    st.write("**Como funciona:**")
-                    st.write("- Analisa todas as transações")
-                    st.write("- Aplica regras personalizadas")
-                    st.write("- Atualiza categorias automaticamente")
-        
-
+                # Botão para limpar categoria ENTRADA
+                if st.button("🧹 Limpar Categoria ENTRADA", use_container_width=True):
+                    with st.spinner("Limpando categoria ENTRADA..."):
+                        transacoes_movidas = limpar_categoria_entrada()
+                        if transacoes_movidas > 0:
+                            st.success(f"✅ {transacoes_movidas} transações movidas para 'Entradas do Mês'!")
+                        else:
+                            st.info("ℹ️ Nenhuma transação com categoria ENTRADA encontrada.")
+                        st.rerun()
         
         # Carregar dados
         dados = carregar_dados()
