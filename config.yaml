@@ -12,3 +12,8 @@ credentials:
       email: juliaabreu2002@gmail.com
       name: Julia Abreu
       password: $2b$12$OdBNqetP3enkIFvsZ8y3eOGnW7ExrAvpmmYaOq3TLzMxlVbAVko2O
+    carolmello:
+      email: carolmferreira2002@outlook.com
+      name: carolina de mello ferreira
+      password: $2b$12$OdBNqetP3enkIFvsZ8y3eOGnW7ExrAvpmmYaOq3TLzMxlVbAVko2O
+preauthorized: null
