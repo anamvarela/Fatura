@@ -386,12 +386,31 @@ def obter_evolucao_gastos():
     
     return evolucao
 
+def carregar_regras_classificacao():
+    """Carrega as regras de classificação do arquivo"""
+    try:
+        with open('regras_classificacao.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+def aplicar_regras_classificacao(descricao):
+    """Aplica as regras de classificação definidas pelo usuário"""
+    regras = carregar_regras_classificacao()
+    descricao_lower = descricao.lower()
+    
+    for regra in regras:
+        if regra['palavra_chave'] in descricao_lower:
+            return regra['categoria']
+    
+    return None
+
 def classificar_transacao(descricao):
     """Classifica a transação em categorias"""
     descricao = descricao.lower()
     
-    # Verificar se contém "estorno" (deve ser entrada, não despesa)
-    if 'estorno' in descricao:
+    # Verificar se contém "estorno" ou "desconto" (deve ser entrada, não despesa)
+    if 'estorno' in descricao or 'desconto' in descricao:
         return "ENTRADA"
     
     # Verificar se é Zig* (entretenimento)
@@ -405,6 +424,11 @@ def classificar_transacao(descricao):
     # VERIFICAÇÕES ESPECIAIS PARA COMPRAS (antes de verificar mercado)
     if 'mercado livre' in descricao or 'mercadolivre' in descricao:
         return 'Compras'
+    
+    # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
+    categoria_regra = aplicar_regras_classificacao(descricao)
+    if categoria_regra:
+        return categoria_regra
     
     categorias = {
         'Alimentação': [

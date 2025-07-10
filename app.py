@@ -68,6 +68,51 @@ def remover_categoria(categoria_remover):
         return True
     return False
 
+def carregar_regras_classificacao():
+    """Carrega as regras de classificação do arquivo"""
+    try:
+        with open('regras_classificacao.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+def salvar_regras_classificacao(regras):
+    """Salva as regras de classificação no arquivo"""
+    with open('regras_classificacao.json', 'w', encoding='utf-8') as f:
+        json.dump(regras, f, indent=2, ensure_ascii=False)
+
+def adicionar_regra_classificacao(palavra_chave, categoria):
+    """Adiciona uma nova regra de classificação"""
+    regras = carregar_regras_classificacao()
+    nova_regra = {
+        'palavra_chave': palavra_chave.lower(),
+        'categoria': categoria,
+        'data_criacao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    regras.append(nova_regra)
+    salvar_regras_classificacao(regras)
+    return True
+
+def remover_regra_classificacao(palavra_chave):
+    """Remove uma regra específica de classificação"""
+    regras = carregar_regras_classificacao()
+    regras_filtradas = [r for r in regras if r['palavra_chave'] != palavra_chave.lower()]
+    if len(regras_filtradas) != len(regras):
+        salvar_regras_classificacao(regras_filtradas)
+        return True
+    return False
+
+def aplicar_regras_classificacao(descricao):
+    """Aplica as regras de classificação definidas pelo usuário"""
+    regras = carregar_regras_classificacao()
+    descricao_lower = descricao.lower()
+    
+    for regra in regras:
+        if regra['palavra_chave'] in descricao_lower:
+            return regra['categoria']
+    
+    return None
+
 def carregar_faturas():
     if os.path.exists('faturas.json'):
         with open('faturas.json', 'r') as f:
@@ -239,7 +284,7 @@ def editar_categoria_transacao(fatura_mes, fatura_ano, descricao, valor, nova_ca
 def classificar_transacao(descricao):
     """
     Classifica automaticamente uma transação com base em sua descrição.
-    Primeiro verifica regras especiais, depois classificações salvas, depois usa as regras automáticas.
+    Primeiro verifica regras especiais, depois regras do usuário, depois classificações salvas, depois usa as regras automáticas.
     """
     descricao_original = descricao
     descricao = descricao.lower().strip()
@@ -255,9 +300,14 @@ def classificar_transacao(descricao):
     if 'mercado livre' in descricao or 'mercadolivre' in descricao:
         return 'Compras'
     
-    # Verificar se contém "estorno" (deve ser entrada, não despesa)
-    if 'estorno' in descricao:
+    # Verificar se contém "estorno" ou "desconto" (deve ser entrada, não despesa)
+    if 'estorno' in descricao or 'desconto' in descricao:
         return "ENTRADA"
+    
+    # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
+    categoria_regra = aplicar_regras_classificacao(descricao)
+    if categoria_regra:
+        return categoria_regra
     
     # Verificar se é Zig* (entretenimento)
     if descricao.startswith('zig'):
@@ -610,9 +660,9 @@ elif authentication_status:
             for linha in linhas:
                 if re.search(r'\d{2} [A-Z]{3}', linha):
                     try:
-                        # Ignorar linhas de IOF e totais
+                        # Ignorar linhas de IOF, totais e transações antecipadas
                         if any(termo in linha.lower() for termo in [
-                            'iof de', 'total de', 'pagamento em'
+                            'iof de', 'total de', 'pagamento em', 'antecipada'
                         ]):
                             continue
                             
@@ -660,8 +710,8 @@ elif authentication_status:
     def classificar_transacao(descricao):
         descricao = descricao.lower()
         
-        # Verificar se contém "estorno" (deve ser entrada, não despesa)
-        if 'estorno' in descricao:
+        # Verificar se contém "estorno" ou "desconto" (deve ser entrada, não despesa)
+        if 'estorno' in descricao or 'desconto' in descricao:
             return "ENTRADA"
         
         # Verificar se é Zig* (entretenimento)
@@ -675,6 +725,11 @@ elif authentication_status:
         # VERIFICAÇÕES ESPECIAIS PARA COMPRAS (antes de verificar mercado)
         if 'mercado livre' in descricao or 'mercadolivre' in descricao:
             return "Compras"
+        
+        # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
+        categoria_regra = aplicar_regras_classificacao(descricao)
+        if categoria_regra:
+            return categoria_regra
         
         # Alimentação
         if any(palavra in descricao for palavra in [
@@ -902,40 +957,104 @@ elif authentication_status:
 
         # Botão para gerenciar classificações
         with st.expander("⚙️ Gerenciar Classificações"):
-            col1, col2 = st.columns([1, 1])
+            tab1, tab2, tab3 = st.tabs(["Criar/Deletar Categorias", "Regras Automáticas", "Regras Existentes"])
             
-            with col1:
-                st.write("**Criar Nova Classificação**")
-                with st.form("nova_classificacao", clear_on_submit=True):
-                    nova_cat = st.text_input("Nome da Nova Classificação")
-                    if st.form_submit_button("Criar"):
-                        if nova_cat:
-                            categorias = carregar_categorias()
-                            if nova_cat not in categorias:
-                                categorias.append(nova_cat)
-                                salvar_categorias(categorias)
-                                st.success(f"✓ Classificação '{nova_cat}' criada com sucesso!")
-                                time.sleep(0.5)
-                                st.rerun()
-                            else:
-                                st.error("Esta classificação já existe!")
+            with tab1:
+                col1, col2 = st.columns([1, 1])
+                
+                with col1:
+                    st.write("**Criar Nova Classificação**")
+                    with st.form("nova_classificacao", clear_on_submit=True):
+                        nova_cat = st.text_input("Nome da Nova Classificação")
+                        if st.form_submit_button("Criar"):
+                            if nova_cat:
+                                categorias = carregar_categorias()
+                                if nova_cat not in categorias:
+                                    categorias.append(nova_cat)
+                                    salvar_categorias(categorias)
+                                    st.success(f"✓ Classificação '{nova_cat}' criada com sucesso!")
+                                    time.sleep(0.5)
+                                    st.rerun()
+                                else:
+                                    st.error("Esta classificação já existe!")
+                
+                with col2:
+                    st.write("**Deletar Classificação**")
+                    with st.form("deletar_classificacao", clear_on_submit=True):
+                        if categorias:
+                            cat_deletar = st.selectbox("Categoria para Deletar", options=categorias)
+                            if st.form_submit_button("🗑️ Deletar", type="secondary"):
+                                if remover_categoria(cat_deletar):
+                                    st.success(f"✓ Classificação '{cat_deletar}' deletada com sucesso!")
+                                    time.sleep(0.5)
+                                    st.rerun()
+                                else:
+                                    st.error("Erro ao deletar classificação!")
+                        else:
+                            st.info("Nenhuma categoria disponível para deletar")
+                            # Botão desabilitado quando não há categorias para deletar
+                            st.form_submit_button("🗑️ Deletar", disabled=True)
             
-            with col2:
-                st.write("**Deletar Classificação**")
-                with st.form("deletar_classificacao", clear_on_submit=True):
-                    if categorias:
-                        cat_deletar = st.selectbox("Categoria para Deletar", options=categorias)
-                        if st.form_submit_button("🗑️ Deletar", type="secondary"):
-                            if remover_categoria(cat_deletar):
-                                st.success(f"✓ Classificação '{cat_deletar}' deletada com sucesso!")
-                                time.sleep(0.5)
-                                st.rerun()
+            with tab2:
+                st.write("**Criar Nova Regra Automática**")
+                st.info("💡 Defina palavras-chave para classificar automaticamente suas transações")
+                
+                with st.form("nova_regra_auto", clear_on_submit=True):
+                    col1, col2, col3 = st.columns([2, 2, 1])
+                    
+                    with col1:
+                        palavra_chave = st.text_input("Palavra-chave", placeholder="ex: ifood, uber, netflix")
+                    
+                    with col2:
+                        categoria_regra = st.selectbox("Classificar como:", options=categorias)
+                    
+                    with col3:
+                        st.write("")  # Espaço para alinhamento
+                        if st.form_submit_button("Adicionar Regra"):
+                            if palavra_chave and categoria_regra:
+                                if adicionar_regra_classificacao(palavra_chave, categoria_regra):
+                                    st.success(f"✓ Regra criada: '{palavra_chave}' → {categoria_regra}")
+                                    time.sleep(0.5)
+                                    st.rerun()
+                                else:
+                                    st.error("Erro ao criar regra!")
                             else:
-                                st.error("Erro ao deletar classificação!")
-                    else:
-                        st.info("Nenhuma categoria disponível para deletar")
-                        # Botão desabilitado quando não há categorias para deletar
-                        st.form_submit_button("🗑️ Deletar", disabled=True)
+                                st.error("Por favor, preencha todos os campos!")
+                
+                st.markdown("---")
+                st.write("**Exemplo de uso:**")
+                st.write("- Palavra-chave: `ifood` → Classificação: `Alimentação`")
+                st.write("- Palavra-chave: `uber` → Classificação: `Transporte`")
+                st.write("- Palavra-chave: `netflix` → Classificação: `Entretenimento`")
+            
+            with tab3:
+                st.write("**Regras Automáticas Existentes**")
+                regras = carregar_regras_classificacao()
+                
+                if regras:
+                    st.write(f"Total de regras: {len(regras)}")
+                    
+                    for idx, regra in enumerate(regras):
+                        col1, col2, col3 = st.columns([2, 2, 1])
+                        
+                        with col1:
+                            st.write(f"**{regra['palavra_chave']}**")
+                        
+                        with col2:
+                            st.write(f"→ {regra['categoria']}")
+                        
+                        with col3:
+                            if st.button("🗑️", key=f"del_regra_{idx}", help="Deletar regra"):
+                                if remover_regra_classificacao(regra['palavra_chave']):
+                                    st.success(f"✓ Regra '{regra['palavra_chave']}' deletada!")
+                                    time.sleep(0.5)
+                                    st.rerun()
+                        
+                        if idx < len(regras) - 1:
+                            st.markdown("<hr style='margin: 0.5rem 0; border: 0.5px solid #ddd;'>", unsafe_allow_html=True)
+                else:
+                    st.info("Nenhuma regra automática criada ainda.")
+                    st.write("Use a aba 'Regras Automáticas' para criar sua primeira regra!")
         
 
         
@@ -1158,8 +1277,6 @@ elif authentication_status:
                         st.markdown("---")
 
         # Gráfico de Comparação por Categoria
-        st.write("### Comparação de Meses por Categoria")
-        
         # Preparar dados para o gráfico
         meses_dados = {}
         categorias_todas = set()
@@ -1317,7 +1434,7 @@ elif authentication_status:
             st.subheader(f"{mes_nome}/{ano}")
             
             total_mes = sum(p['valor'] for p in parcelas)
-            st.metric("Total do Mês", formatar_valor(total_mes))
+            st.markdown(f"**Total do Mês:** {formatar_valor(total_mes)}")
             
             for parcela in parcelas:
                 col1, col2, col3 = st.columns([3, 2, 2])
