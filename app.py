@@ -386,6 +386,24 @@ def remover_gasto_fixo_novo(descricao, valor):
     st.success('✅ Gasto fixo removido com sucesso!')
     st.experimental_rerun()
 
+def limpar_fatura(mes, ano):
+    """
+    Remove todos os dados da fatura do mês e ano selecionados.
+    """
+    dados = carregar_dados()
+    
+    # Encontrar e remover a fatura específica
+    dados['faturas'] = [
+        fatura for fatura in dados['faturas']
+        if not (fatura['mes'] == mes and fatura['ano'] == ano)
+    ]
+    
+    # Salvar os dados atualizados
+    salvar_dados(dados)
+    st.success(f"✓ Fatura de {mes}/{ano} removida com sucesso!")
+    time.sleep(0.5)
+    st.rerun()
+
 # Configuração da página
 st.set_page_config(
     page_title="Análise Faturas Nubank",
