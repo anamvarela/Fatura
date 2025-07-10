@@ -826,7 +826,7 @@ elif authentication_status:
         
         # Formulário para adicionar entrada
         with st.form("form_entrada"):
-            col1, col2, col3 = st.columns([2, 2, 1])
+            col1, col2, col3, col4 = st.columns([2, 3, 1.5, 1])
             
             with col1:
                 valor_entrada = st.number_input("Valor", min_value=0.0, format="%.2f")
@@ -840,27 +840,42 @@ elif authentication_status:
                     options=["Salário", "Freelance", "Outros"]
                 )
             
-            if st.form_submit_button("Adicionar Entrada"):
-                if valor_entrada > 0 and descricao_entrada:
-                    adicionar_entrada(mes_num, ano_selecionado, valor_entrada, descricao_entrada, tipo_entrada)
-                    st.success("✓ Entrada adicionada com sucesso!")
-                else:
-                    st.error("Por favor, preencha todos os campos.")
+            with col4:
+                st.write("")  # Espaço para alinhar
+                if st.form_submit_button("Adicionar Entrada", use_container_width=True):
+                    if valor_entrada > 0 and descricao_entrada:
+                        adicionar_entrada(mes_num, ano_selecionado, valor_entrada, descricao_entrada, tipo_entrada)
+                        st.success("✓ Entrada adicionada com sucesso!")
+                    else:
+                        st.error("Por favor, preencha todos os campos.")
 
         # Mostrar entradas existentes
         entradas_existentes = obter_entradas(mes_num, ano_selecionado)
         if entradas_existentes:
+            # Mostrar total em cima
+            total_entradas = sum(e['valor'] for e in entradas_existentes)
+            st.metric("Total de Entradas", formatar_valor(total_entradas))
+            
+            # Criar DataFrame para tabela organizada
+            df_entradas = pd.DataFrame([{
+                'Valor': formatar_valor(entrada['valor']),
+                'Descrição': entrada['descricao'],
+                'Tipo': entrada['tipo'],
+                'Ações': f"del_entrada_{idx}"
+            } for idx, entrada in enumerate(entradas_existentes)])
+            
+            # Mostrar tabela
             st.write("### Entradas Registradas")
             for idx, entrada in enumerate(entradas_existentes):
-                col1, col2, col3, col4 = st.columns([1, 2, 1, 1])
+                col1, col2, col3, col4 = st.columns([1.5, 3, 1.5, 0.5])
                 with col1:
-                    st.write(f"R$ {entrada['valor']:.2f}")
+                    st.write(formatar_valor(entrada['valor']))
                 with col2:
                     st.write(entrada['descricao'])
                 with col3:
                     st.write(entrada['tipo'])
                 with col4:
-                    if st.button("🗑️", key=f"del_entrada_{idx}"):
+                    if st.button("🗑️", key=f"del_entrada_{idx}", help="Deletar entrada"):
                         remover_entrada(
                             entrada['mes'],
                             entrada['ano'],
@@ -869,10 +884,10 @@ elif authentication_status:
                             entrada['tipo']
                         )
                         st.rerun()
-
-            # Mostrar total
-            total_entradas = sum(e['valor'] for e in entradas_existentes)
-            st.metric("Total de Entradas", f"R$ {total_entradas:.2f}")
+                        
+                # Linha fina entre itens
+                if idx < len(entradas_existentes) - 1:
+                    st.markdown("<hr style='margin: 0.5rem 0; border: 0.5px solid #ddd;'>", unsafe_allow_html=True)
         else:
             st.info("Nenhuma entrada registrada para este mês.")
 
@@ -908,11 +923,8 @@ elif authentication_status:
             with col2:
                 st.write("**Deletar Classificação**")
                 with st.form("deletar_classificacao", clear_on_submit=True):
-                    # Filtrar categorias padrão que não podem ser deletadas
-                    categorias_deletaveis = [cat for cat in categorias if cat not in ['Alimentação', 'Transporte', 'Entretenimento', 'Self Care', 'Compras', 'Outros']]
-                    
-                    if categorias_deletaveis:
-                        cat_deletar = st.selectbox("Categoria para Deletar", options=categorias_deletaveis)
+                    if categorias:
+                        cat_deletar = st.selectbox("Categoria para Deletar", options=categorias)
                         if st.form_submit_button("🗑️ Deletar", type="secondary"):
                             if remover_categoria(cat_deletar):
                                 st.success(f"✓ Classificação '{cat_deletar}' deletada com sucesso!")
@@ -921,7 +933,7 @@ elif authentication_status:
                             else:
                                 st.error("Erro ao deletar classificação!")
                     else:
-                        st.info("Nenhuma categoria personalizada para deletar")
+                        st.info("Nenhuma categoria disponível para deletar")
                         # Botão desabilitado quando não há categorias para deletar
                         st.form_submit_button("🗑️ Deletar", disabled=True)
         
@@ -969,7 +981,7 @@ elif authentication_status:
             # Usar o estado para controlar se o expander está aberto
             is_open = st.session_state.categoria_aberta == categoria
             with st.expander(
-                f"📁 {categoria} - {formatar_valor(total)} ({(total/total_atual*100):.1f}%) - {len(df[df['categoria'] == categoria])} transações",
+                f"📁 {categoria} - {formatar_valor(total)} ({(total/total_atual*100):.1f}%)",
                 expanded=is_open
             ):
                 gastos_categoria = df[df['categoria'] == categoria].sort_values('valor', ascending=False)
@@ -1176,50 +1188,62 @@ elif authentication_status:
         dados = carregar_dados()
         gastos_fixos = dados.get('gastos_fixos', [])
         
-        # Seção para adicionar novo gasto fixo
-        st.subheader("Adicionar Gasto Fixo Mensal")
-        col1, col2 = st.columns(2)
-        with col1:
-            descricao = st.text_input("Descrição", key="gasto_fixo_desc")
-            valor = st.number_input("Valor Mensal", min_value=0.0, step=0.01, key="gasto_fixo_valor")
-        with col2:
-            categoria = st.selectbox(
-                "Categoria",
-                options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"],
-                key="gasto_fixo_cat"
-            )
-        
-        if st.button("Adicionar Gasto Fixo"):
-            novo_gasto = {
-                'descricao': descricao,
-                'valor': valor,
-                'categoria': categoria,
-                'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            }
-            dados['gastos_fixos'].append(novo_gasto)
-            salvar_dados(dados)
-            st.success("✓ Gasto fixo adicionado com sucesso!")
+        # Formulário para adicionar gasto fixo
+        with st.form("form_gasto_fixo"):
+            col1, col2, col3, col4 = st.columns([2, 3, 1.5, 1])
+            
+            with col1:
+                valor = st.number_input("Valor Mensal", min_value=0.0, step=0.01, format="%.2f")
+            
+            with col2:
+                descricao = st.text_input("Descrição")
+            
+            with col3:
+                categoria = st.selectbox(
+                    "Categoria",
+                    options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"]
+                )
+            
+            with col4:
+                st.write("")  # Espaço para alinhar
+                if st.form_submit_button("Adicionar Gasto Fixo", use_container_width=True):
+                    if valor > 0 and descricao:
+                        novo_gasto = {
+                            'descricao': descricao,
+                            'valor': valor,
+                            'categoria': categoria,
+                            'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        }
+                        dados['gastos_fixos'].append(novo_gasto)
+                        salvar_dados(dados)
+                        st.success("✓ Gasto fixo adicionado com sucesso!")
+                    else:
+                        st.error("Por favor, preencha todos os campos.")
         
         # Mostrar gastos fixos existentes
         if gastos_fixos:
-            st.subheader("Gastos Fixos Cadastrados")
+            # Mostrar total em cima
             total_fixo = sum(g['valor'] for g in gastos_fixos)
             st.metric("Total Mensal", formatar_valor(total_fixo))
             
+            st.write("### Gastos Fixos Cadastrados")
             for idx, gasto in enumerate(gastos_fixos):
-                col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+                col1, col2, col3, col4 = st.columns([1.5, 3, 1.5, 0.5])
                 with col1:
-                    st.write(gasto['descricao'])
-                with col2:
                     st.write(formatar_valor(gasto['valor']))
+                with col2:
+                    st.write(gasto['descricao'])
                 with col3:
                     st.write(gasto['categoria'])
                 with col4:
-                    if st.button("🗑️", key=f"del_fixo_{idx}"):
+                    if st.button("🗑️", key=f"del_fixo_{idx}", help="Deletar gasto fixo"):
                         dados['gastos_fixos'].remove(gasto)
                         salvar_dados(dados)
                         st.rerun()
-                st.markdown("---")
+                        
+                # Linha fina entre itens
+                if idx < len(gastos_fixos) - 1:
+                    st.markdown("<hr style='margin: 0.5rem 0; border: 0.5px solid #ddd;'>", unsafe_allow_html=True)
         else:
             st.info("Nenhum gasto fixo cadastrado.")
 
@@ -1292,7 +1316,7 @@ elif authentication_status:
             }
         )
 
-    # Estilo para tabelas mais finas
+    # Estilo para tabelas mais finas e botões menores
     st.markdown("""
 <style>
     .dataframe {
@@ -1311,6 +1335,31 @@ elif authentication_status:
     hr {
         margin: 0.5rem 0 !important;
         border-color: #ddd !important;
+    }
+    /* Botões menores */
+    .stButton > button {
+        height: 2.5rem !important;
+        font-size: 0.875rem !important;
+        padding: 0.25rem 0.75rem !important;
+    }
+    /* Botões de deletar ainda menores */
+    button[title="Deletar entrada"], button[title="Deletar gasto fixo"] {
+        height: 2rem !important;
+        width: 2rem !important;
+        font-size: 1rem !important;
+        padding: 0 !important;
+        min-width: 2rem !important;
+    }
+    /* Espaçamento entre linhas das tabelas */
+    .block-container .element-container {
+        margin-bottom: 0.5rem !important;
+    }
+    /* Linhas de separação mais sutis */
+    .separator-line {
+        border: none;
+        height: 1px;
+        background-color: #e0e0e0;
+        margin: 0.5rem 0;
     }
 </style>
 """, unsafe_allow_html=True) 
