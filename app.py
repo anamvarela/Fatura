@@ -219,16 +219,19 @@ def editar_categoria_transacao(fatura_mes, fatura_ano, descricao, valor, nova_ca
 def classificar_transacao(descricao):
     """
     Classifica automaticamente uma transação com base em sua descrição.
-    Primeiro verifica nas classificações salvas, depois usa as regras automáticas.
+    Primeiro verifica regras especiais, depois classificações salvas, depois usa as regras automáticas.
     """
+    descricao_original = descricao
     descricao = descricao.lower().strip()
     
-    # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
-    if '99' in descricao and ('app' in descricao or '*' in descricao):
+    # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE (ANTES DE TUDO)
+    if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
         print(f"DEBUG: Classificando '{descricao}' como Transporte devido à regra 99app")  # Debug
+        # Também salva a classificação para uso futuro
+        atualizar_classificacao_salva(descricao, 'Transporte')
         return 'Transporte'
     
-    # Primeiro verifica se já existe uma classificação salva
+    # Verificar se já existe uma classificação salva
     classificacoes_salvas = carregar_classificacoes_salvas()
     if descricao in classificacoes_salvas:
         return classificacoes_salvas[descricao]
@@ -386,6 +389,29 @@ def remover_gasto_fixo_novo(descricao, valor):
     st.success('✅ Gasto fixo removido com sucesso!')
     st.experimental_rerun()
 
+def corrigir_classificacoes_99app():
+    """
+    Corrige todas as classificações incorretas do 99app que estão como 'Compras' para 'Transporte'.
+    """
+    dados = carregar_dados()
+    faturas = dados.get('faturas', [])
+    
+    corrigidas = 0
+    for fatura in faturas:
+        for transacao in fatura.get('transacoes', []):
+            descricao = transacao.get('descricao', '').lower()
+            # Verifica se é uma transação do 99app e se está classificada incorretamente
+            if ('99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao):
+                if transacao.get('categoria') == 'Compras':
+                    transacao['categoria'] = 'Transporte'
+                    corrigidas += 1
+                    print(f"Corrigindo classificação de '{transacao['descricao']}' para Transporte")
+                    # Salva a classificação correta
+                    atualizar_classificacao_salva(descricao, 'Transporte')
+    
+    salvar_dados(dados)
+    return corrigidas
+
 def limpar_fatura(mes, ano):
     """
     Remove todos os dados da fatura do mês e ano selecionados.
@@ -446,8 +472,8 @@ elif authentication_status:
     with st.sidebar:
         authenticator.logout('Logout')
     
-    # Título principal com nome do usuário
-    st.markdown(f"<h1 class='main-header'>Análise ", unsafe_allow_html=True)
+    # Título principal
+    st.markdown(f"<h1 class='main-header'>Análise</h1>", unsafe_allow_html=True)
     
     # Inicializar estados
     if 'checkbox_states' not in st.session_state:
@@ -549,6 +575,10 @@ elif authentication_status:
     def classificar_transacao(descricao):
         descricao = descricao.lower()
         
+        # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
+        if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
+            return "Transporte"
+        
         # Alimentação
         if any(palavra in descricao for palavra in [
             'ifood', 'rappi', 'uber eats', 'restaurante', 'padaria', 'mercado',
@@ -559,7 +589,7 @@ elif authentication_status:
         
         # Transporte
         if any(palavra in descricao for palavra in [
-            'uber', '99app', '99 app', '99app *99app', '99 pop', '99pop', 'taxi', 'táxi', 'combustivel', 'combustível',
+            'uber', '99 pop', '99pop', 'taxi', 'táxi', 'combustivel', 'combustível',
             'estacionamento', 'metro', 'metrô', 'onibus', 'ônibus', 'bilhete',
             'posto', 'gasolina', 'etanol', 'alcool', 'álcool', 'uber*', 'uber x'
         ]):
@@ -763,6 +793,17 @@ elif authentication_status:
                             st.rerun()
                         else:
                             st.error("Esta classificação já existe!")
+        
+        # Botão para corrigir classificações do 99app
+        col1, col2, col3 = st.columns([1, 1, 2])
+        with col1:
+            if st.button("🔧 Corrigir 99app", use_container_width=True):
+                corrigidas = corrigir_classificacoes_99app()
+                if corrigidas > 0:
+                    st.success(f"✓ {corrigidas} transações do 99app corrigidas para Transporte!")
+                    st.rerun()
+                else:
+                    st.info("Nenhuma transação do 99app precisou ser corrigida.")
         
         # Carregar dados
         dados = carregar_dados()

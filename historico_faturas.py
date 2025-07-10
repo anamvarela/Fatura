@@ -389,6 +389,11 @@ def obter_evolucao_gastos():
 def classificar_transacao(descricao):
     """Classifica a transação em categorias"""
     descricao = descricao.lower()
+    
+    # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
+    if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
+        return 'Transporte'
+    
     categorias = {
         'Alimentação': [
             'restaurante', 'ifood', 'food', 'mercado', 'supermercado', 'padaria',
