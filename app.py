@@ -1128,8 +1128,15 @@ elif authentication_status:
             else:
                 df.loc[i, 'categoria'] = classificar_transacao(transacao['descricao'])
         
-        # Calcular totais por categoria
+        # Filtrar transações com categoria ENTRADA (não devem aparecer na análise)
+        df = df[df['categoria'] != 'ENTRADA']
+        
+        # Calcular totais por categoria (filtrar ENTRADA se existir)
         totais_categoria = df.groupby('categoria')['valor'].sum().sort_values(ascending=False)
+        
+        # Remover categoria ENTRADA se existir (não deve aparecer na análise)
+        if 'ENTRADA' in totais_categoria.index:
+            totais_categoria = totais_categoria.drop('ENTRADA')
 
         # Calcular total geral
         total_atual = totais_categoria.sum()
@@ -1346,10 +1353,23 @@ elif authentication_status:
                     else:
                         df_fatura.loc[i, 'categoria'] = classificar_transacao(transacao['descricao'])
                 
+                # Filtrar transações com categoria ENTRADA
+                df_fatura = df_fatura[df_fatura['categoria'] != 'ENTRADA']
+                
+                # Se não sobrou nenhuma transação, pular
+                if df_fatura.empty:
+                    continue
+                
                 # Calcular totais por categoria
                 totais_fatura = df_fatura.groupby('categoria')['valor'].sum()
                 meses_dados[mes_ano]['categorias'] = totais_fatura.to_dict()
-                categorias_todas.update(totais_fatura.index.tolist())
+                
+                # Adicionar categorias (excluindo ENTRADA)
+                categorias_grafico = [cat for cat in totais_fatura.index.tolist() if cat != 'ENTRADA']
+                categorias_todas.update(categorias_grafico)
+        
+        # Remover ENTRADA das categorias_todas como medida de segurança
+        categorias_todas.discard('ENTRADA')
         
         # Ordenar meses cronologicamente
         meses_ordenados = sorted(meses_dados.keys(), key=lambda x: (meses_dados[x]['ano'], meses_dados[x]['mes']))
@@ -1364,7 +1384,8 @@ elif authentication_status:
             # Criar barras para cada mês
             for i, mes in enumerate(meses_ordenados):
                 valores = []
-                categorias_ordenadas = sorted(categorias_todas)
+                # Filtrar categorias para remover ENTRADA
+                categorias_ordenadas = sorted([cat for cat in categorias_todas if cat != 'ENTRADA'])
                 
                 for categoria in categorias_ordenadas:
                     valor = meses_dados[mes].get('categorias', {}).get(categoria, 0)
