@@ -726,8 +726,6 @@ elif authentication_status:
 
     # Na aba de Análise
     with tab_analise:
-        st.header("📊 Análise de Gastos")
-        
         # Inicializar session_state para categoria aberta
         if 'categoria_aberta' not in st.session_state:
             st.session_state.categoria_aberta = None
