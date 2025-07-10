@@ -922,6 +922,8 @@ elif authentication_status:
                                 st.error("Erro ao deletar classificação!")
                     else:
                         st.info("Nenhuma categoria personalizada para deletar")
+                        # Botão desabilitado quando não há categorias para deletar
+                        st.form_submit_button("🗑️ Deletar", disabled=True)
         
 
         
