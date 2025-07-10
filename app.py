@@ -732,6 +732,9 @@ elif authentication_status:
         if 'categoria_aberta' not in st.session_state:
             st.session_state.categoria_aberta = None
 
+        # Carregar categorias do arquivo
+        categorias = carregar_categorias()
+
         # Botão para adicionar nova classificação no topo
         with st.expander("➕ Criar Nova Classificação"):
             with st.form("nova_classificacao", clear_on_submit=True):
@@ -830,6 +833,8 @@ elif authentication_status:
                                     transacao['descricao'],
                                     transacao['valor']
                                 )
+                                st.success("✓ Transação excluída com sucesso!")
+                                time.sleep(0.5)  # Pequena pausa para mostrar a mensagem
                                 st.rerun()
                         
                         # Se o botão de edição foi clicado, mostrar o formulário
@@ -837,9 +842,9 @@ elif authentication_status:
                             with st.form(f"form_transacao_{idx}", clear_on_submit=True):
                                 nova_categoria = st.selectbox(
                                     "Categoria",
-                                    options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"],
+                                    options=categorias,  # Usar categorias do arquivo
                                     key=f"cat_{idx}",
-                                    index=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Compras", "Outros"].index(transacao['categoria'])
+                                    index=categorias.index(transacao['categoria'])
                                 )
                                 
                                 is_fixo = st.checkbox("Marcar como gasto fixo", key=f"fix_{idx}")
