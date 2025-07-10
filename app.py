@@ -59,6 +59,15 @@ def adicionar_categoria(nova_categoria):
         return True
     return False
 
+def remover_categoria(categoria_remover):
+    """Remove uma categoria da lista"""
+    categorias = carregar_categorias()
+    if categoria_remover in categorias:
+        categorias.remove(categoria_remover)
+        salvar_categorias(categorias)
+        return True
+    return False
+
 def carregar_faturas():
     if os.path.exists('faturas.json'):
         with open('faturas.json', 'r') as f:
@@ -246,13 +255,21 @@ def classificar_transacao(descricao):
     if 'mercado livre' in descricao or 'mercadolivre' in descricao:
         return 'Compras'
     
+    # Verificar se contém "estorno" (deve ser entrada, não despesa)
+    if 'estorno' in descricao:
+        return "ENTRADA"
+    
+    # Verificar se é Zig* (entretenimento)
+    if descricao.startswith('zig'):
+        return 'Entretenimento'
+    
     # Verificar se já existe uma classificação salva
     classificacoes_salvas = carregar_classificacoes_salvas()
     if descricao in classificacoes_salvas:
         return classificacoes_salvas[descricao]
 
     # Verificar se é uma entrada
-    palavras_entrada = ['reembolso', 'estorno', 'cashback', 'rendimento', 'pagamento recebido', 'transferencia recebida']
+    palavras_entrada = ['reembolso', 'cashback', 'rendimento', 'pagamento recebido', 'transferencia recebida']
     if any(palavra in descricao for palavra in palavras_entrada):
         return "ENTRADA"
 
@@ -359,14 +376,16 @@ def adicionar_fatura(fatura):
     dados = carregar_dados()
     faturas = dados.get('faturas', [])
     
-    # Classificar transações e tratar descontos/estornos
+    # Classificar transações e separar entradas de despesas
+    transacoes_despesas = []
+    entradas = dados.get('entradas', [])
+    
     for transacao in fatura['transacoes']:
         if 'categoria' not in transacao:
             transacao['categoria'] = classificar_transacao(transacao['descricao'])
         
-        # Se for desconto/estorno, mover para entradas
+        # Se for estorno/entrada, mover para entradas
         if transacao['categoria'] == "ENTRADA":
-            entradas = dados.get('entradas', [])
             entrada = {
                 'descricao': transacao['descricao'],
                 'valor': transacao['valor'],
@@ -374,9 +393,13 @@ def adicionar_fatura(fatura):
                 'ano': fatura['ano']
             }
             entradas.append(entrada)
-            dados['entradas'] = entradas
-            # Remover da lista de transações
-            fatura['transacoes'].remove(transacao)
+        else:
+            # Se não for entrada, manter como despesa
+            transacoes_despesas.append(transacao)
+    
+    # Atualizar a fatura apenas com despesas
+    fatura['transacoes'] = transacoes_despesas
+    dados['entradas'] = entradas
     
     # Verificar se já existe uma fatura para este mês/ano
     for i, f in enumerate(faturas):
@@ -637,6 +660,14 @@ elif authentication_status:
     def classificar_transacao(descricao):
         descricao = descricao.lower()
         
+        # Verificar se contém "estorno" (deve ser entrada, não despesa)
+        if 'estorno' in descricao:
+            return "ENTRADA"
+        
+        # Verificar se é Zig* (entretenimento)
+        if descricao.startswith('zig'):
+            return 'Entretenimento'
+        
         # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
         if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
             return "Transporte"
@@ -854,52 +885,45 @@ elif authentication_status:
         # Carregar categorias do arquivo
         categorias = carregar_categorias()
 
-        # Botão para adicionar nova classificação no topo
-        with st.expander("➕ Criar Nova Classificação"):
-            with st.form("nova_classificacao", clear_on_submit=True):
-                nova_cat = st.text_input("Nome da Nova Classificação")
-                if st.form_submit_button("Criar"):
-                    if nova_cat:
-                        categorias = carregar_categorias()
-                        if nova_cat not in categorias:
-                            categorias.append(nova_cat)
-                            salvar_categorias(categorias)
-                            st.success(f"✓ Classificação '{nova_cat}' criada com sucesso!")
-                            time.sleep(0.5)
-                            st.rerun()
-                        else:
-                            st.error("Esta classificação já existe!")
+        # Botão para gerenciar classificações
+        with st.expander("⚙️ Gerenciar Classificações"):
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.write("**Criar Nova Classificação**")
+                with st.form("nova_classificacao", clear_on_submit=True):
+                    nova_cat = st.text_input("Nome da Nova Classificação")
+                    if st.form_submit_button("Criar"):
+                        if nova_cat:
+                            categorias = carregar_categorias()
+                            if nova_cat not in categorias:
+                                categorias.append(nova_cat)
+                                salvar_categorias(categorias)
+                                st.success(f"✓ Classificação '{nova_cat}' criada com sucesso!")
+                                time.sleep(0.5)
+                                st.rerun()
+                            else:
+                                st.error("Esta classificação já existe!")
+            
+            with col2:
+                st.write("**Deletar Classificação**")
+                with st.form("deletar_classificacao", clear_on_submit=True):
+                    # Filtrar categorias padrão que não podem ser deletadas
+                    categorias_deletaveis = [cat for cat in categorias if cat not in ['Alimentação', 'Transporte', 'Entretenimento', 'Self Care', 'Compras', 'Outros']]
+                    
+                    if categorias_deletaveis:
+                        cat_deletar = st.selectbox("Categoria para Deletar", options=categorias_deletaveis)
+                        if st.form_submit_button("🗑️ Deletar", type="secondary"):
+                            if remover_categoria(cat_deletar):
+                                st.success(f"✓ Classificação '{cat_deletar}' deletada com sucesso!")
+                                time.sleep(0.5)
+                                st.rerun()
+                            else:
+                                st.error("Erro ao deletar classificação!")
+                    else:
+                        st.info("Nenhuma categoria personalizada para deletar")
         
-        # Botões para corrigir classificações
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col1:
-            if st.button("🔧 Corrigir 99app", use_container_width=True):
-                corrigidas = corrigir_classificacoes_99app()
-                if corrigidas > 0:
-                    st.success(f"✓ {corrigidas} transações do 99app corrigidas para Transporte!")
-                    st.rerun()
-                else:
-                    st.info("Nenhuma transação do 99app precisou ser corrigida.")
-        
-        with col2:
-            if st.button("🍴 Corrigir Restaurantes", use_container_width=True):
-                corrigidas = corrigir_classificacoes_restaurantes()
-                if corrigidas > 0:
-                    st.success(f"✓ {corrigidas} restaurantes corrigidos para Alimentação!")
-                    st.rerun()
-                else:
-                    st.info("Nenhum restaurante precisou ser corrigido.")
-        
-        with col3:
-            if st.button("🔄 Corrigir Tudo", use_container_width=True):
-                corrigidas_99app = corrigir_classificacoes_99app()
-                corrigidas_rest = corrigir_classificacoes_restaurantes()
-                total_corrigidas = corrigidas_99app + corrigidas_rest
-                if total_corrigidas > 0:
-                    st.success(f"✓ {total_corrigidas} transações corrigidas ({corrigidas_99app} 99app + {corrigidas_rest} restaurantes)!")
-                    st.rerun()
-                else:
-                    st.info("Todas as classificações já estão corretas.")
+
         
         # Carregar dados
         dados = carregar_dados()
@@ -1060,14 +1084,25 @@ elif authentication_status:
         for fatura in faturas:
             for transacao in fatura['transacoes']:
                 descricao = transacao['descricao'].lower()
-                # Procurar padrões de parcelas (ex: 1/12, 01/12, 1 de 12, etc)
-                padrao_parcela = re.search(r'(\d{1,2})[^\d]+(\d{1,2})', descricao)
+                
+                # Pular transações do 99app para evitar detecção incorreta de parcelas
+                if any(termo in descricao for termo in ['99app', '99 app', '99app *99app']):
+                    continue
+                
+                # Procurar padrões de parcelas usando regex mais específica
+                # Aceita: "1/12", "01/12", "1 de 12", "parcela 1 de 12", etc.
+                padrao_parcela = re.search(r'(?:parcela\s+)?(\d{1,2})(?:\s*[/de]\s*|\s+de\s+)(\d{1,2})', descricao)
                 if padrao_parcela:
                     parcela_atual = int(padrao_parcela.group(1))
                     total_parcelas = int(padrao_parcela.group(2))
                     
-                    # Criar chave única para a compra
-                    chave = re.sub(r'\d{1,2}[^\d]+\d{1,2}', '', descricao).strip()
+                    # Validações para evitar falsos positivos
+                    if (parcela_atual < 1 or parcela_atual > total_parcelas or 
+                        total_parcelas < 2 or total_parcelas > 60):
+                        continue
+                    
+                    # Criar chave única para a compra (removendo o padrão de parcela)
+                    chave = re.sub(r'(?:parcela\s+)?\d{1,2}(?:\s*[/de]\s*|\s+de\s+)\d{1,2}', '', descricao).strip()
                     
                     if chave not in todas_parcelas:
                         todas_parcelas[chave] = {

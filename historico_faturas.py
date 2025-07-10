@@ -390,6 +390,14 @@ def classificar_transacao(descricao):
     """Classifica a transação em categorias"""
     descricao = descricao.lower()
     
+    # Verificar se contém "estorno" (deve ser entrada, não despesa)
+    if 'estorno' in descricao:
+        return "ENTRADA"
+    
+    # Verificar se é Zig* (entretenimento)
+    if descricao.startswith('zig'):
+        return 'Entretenimento'
+    
     # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
     if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
         return 'Transporte'
