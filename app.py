@@ -582,15 +582,16 @@ with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 
 # Criar o autenticador
-authenticator = stauth.authenticate(
+authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
     config['cookie']['key'],
-    config['cookie']['expiry_days']
+    config['cookie']['expiry_days'],
+    config.get('preauthorized', [])
 )
 
 # Adicionar login
-name, authentication_status, username = authenticator.login('Login')
+name, authentication_status, username = authenticator.login('Login', 'main')
 
 if authentication_status == False:
     st.error('Username/password is incorrect')
@@ -606,7 +607,7 @@ elif authentication_status:
     
     # Adicionar logout na sidebar
     with st.sidebar:
-        authenticator.logout('Logout')
+        authenticator.logout('Logout', 'sidebar')
     
     # Título principal
     st.markdown(f"<h1 class='main-header'>Análise</h1>", unsafe_allow_html=True)
