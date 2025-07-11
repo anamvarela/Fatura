@@ -406,69 +406,148 @@ def aplicar_regras_classificacao(descricao):
     return None
 
 def classificar_transacao(descricao):
-    """Classifica a transação em categorias"""
-    descricao = descricao.lower()
+    """
+    Classifica automaticamente uma transação com base em sua descrição.
+    """
+    descricao_original = descricao
+    descricao = descricao.lower().strip()
     
-    # Verificar se contém "estorno" ou "desconto" - isso é tratado na função adicionar_fatura()
-    # Não classificamos aqui, apenas retornamos categoria normal
-    
-    # Verificar se é Zig* (entretenimento)
-    if descricao.startswith('zig'):
-        return 'Entretenimento'
-    
-    # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
-    if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
-        return 'Transporte'
-    
-    # VERIFICAÇÕES ESPECIAIS PARA ROUPAS (antes de verificar mercado)
-    if 'mercado livre' in descricao or 'mercadolivre' in descricao:
-        return 'Roupas'
-    
-    # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
+    # APLICAR REGRAS DO USUÁRIO (palavras-chave definidas pelo usuário)
     categoria_regra = aplicar_regras_classificacao(descricao)
     if categoria_regra:
         return categoria_regra
     
+    # VERIFICAÇÕES ESPECIAIS HARDCODED
+    # 99APP - Regra especial para transporte
+    if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
+        return 'Transporte'
+    
+    # Mercado Livre - Regra especial para roupas
+    if 'mercado livre' in descricao or 'mercadolivre' in descricao:
+        return 'Roupas'
+    
+    # Zig* - Regra especial para entretenimento
+    if descricao.startswith('zig'):
+        return 'Entretenimento'
+
+    # Dicionário de estabelecimentos por categoria - VERSÃO COMPLETA
     categorias = {
         'Alimentação': [
-            'restaurante', 'ifood', 'food', 'mercado', 'supermercado', 'padaria',
-            'confeitaria', 'bar', 'galeto', 'absurda', 'katzsu',
-            'garota do', 'abbraccio', 'leblon resta', 'rainha',
-            'zona sul', 'tabacaria', 'cafeteria', 'casa do alemao',
-            'ferro e farinha', 'eleninha', 'buddario',
-            # Restaurantes específicos baseados nos dados históricos
+            # Delivery e apps
+            'ifood', 'rappi', 'uber eats', 'james delivery', 'aiqfome', 'zomato', 'loggi',
+            # Restaurantes genéricos
+            'restaurante', 'rest.', 'rest ', 'churrascaria', 'pizzaria', 'pizza',
+            'hamburger', 'burger', 'lanchonete', 'bar', 'boteco', 'cantina',
+            'galeto', 'padaria', 'confeitaria', 'doceria', 'cafeteria', 'café',
+            'bistro', 'buffet', 'grill', 'espeto', 'pastelaria', 'pastel',
+            'rotisserie', 'sushi', 'japanese', 'china in box', 'chinesa', 'thai',
+            'mexicano', 'árabe', 'arabe', 'ferro e farinha', 'lancheria',
+            # Redes grandes
+            'outback', 'mcdonalds', 'mc donalds', 'burger king', 'bk', 'subway',
+            'habibs', 'spoleto', 'giraffas', 'madero', 'dominos', 'pizza hut',
+            'starbucks', 'kopenhagen', 'cacau show', 'bob beef', 'bobs',
+            'kfc', 'popeyes', 'subway', 'dairy queen',
+            # Mercados e supermercados
+            'carrefour', 'extra', 'pao de acucar', 'pão de açúcar', 'assai', 'atacadao', 'atacadão',
+            'mundial', 'guanabara', 'zona sul', 'hortifruti', 'supermarket', 'mercado',
+            'supermercado', 'sacolao', 'feira', 'mercearia', 'atacado', 'dia',
+            'sams club', 'makro', 'tenda', 'quitanda', 'adega', 'emporio', 'empório',
+            'armazem', 'armazém', 'minimercado', 'mercadinho', 'acougue', 'açougue',
+            'peixaria', 'supernosso', 'verdemar', 'epa', 'super', 'mart',
+            'big box', 'walmart', 'central', 'prezunic', 'carioca',
+            # Restaurantes específicos do RJ
             'bendita chica', 'bendita', 'chica', 'amen gavea', 'amen',
-            'art food', 'braseiro', 'gavea', 'nama', 'nanquim', 'posi mozza',
-            'posi', 'mozza', 'smoov', 'sucos', 'katzsu bar', 'dri',
+            'art food', 'abbraccio', 'braseiro', 'gavea', 'nama',
+            'nanquim', 'posi mozza', 'posi', 'mozza', 'smoov', 'sucos',
+            'katzsu', 'katzsu bar', 'eleninha', 'buddario', 'dri',
             'jobi', 'scarpi', 'tintin', 'choperiakaraoke', 'chopp',
-            'alemao', 'woods wine', 'woods', 'wine', 'reserva 11', 'beach club',
-            'zig', 'caza', 'lagoa', 'sheesh', 'downtown', 'leblon',
-            'natural delli', 'buffet'
+            'casa do alemao', 'alemao', 'tabacaria', 'cafeteria',
+            'woods wine', 'woods', 'wine', 'reserva 11', 'beach club',
+            'sheesh', 'downtown', 'rainha', 'leblon', 'natural delli',
+            'absurda', 'confeitaria', 'bacio di latte', 'yogoberry',
+            'galeto leblon', 'galeto rainha', 'pavilhao', 'sardinha',
+            'la guapa', 'lena park', 'pasta basta', 'stuzzi',
+            # Palavras-chave gerais
+            'food', 'caza', 'lagoa', 'buffet', 'lanches', 'refeicao', 'refeição',
+            'comida', 'bebida', 'alimentacao', 'alimentação'
         ],
         'Transporte': [
-            'uber', '99', 'taxi', 'combustivel', 'estacionamento', 'pedágio',
-            'metro', 'brt', 'van', 'onibus', 'mobilidade', 'posto', 'gasolina'
+            # Apps de transporte (99app já tratado separadamente)
+            'uber', 'uber*', 'uber x', 'uber eats', '99 pop', '99pop', 'cabify', 
+            'taxi', 'táxi', 'transfer', 'shuttle', 'buser', 'blablacar',
+            # Combustível e postos
+            'posto', 'shell', 'ipiranga', 'petrobras', 'br posto', 'ale',
+            'combustivel', 'combustível', 'gasolina', 'etanol', 'diesel', 
+            'alcool', 'álcool', 'br mania', 'texaco', 'esso',
+            # Transporte público
+            'metro', 'metrô', 'trem', 'onibus', 'ônibus', 'brt', 'vlt',
+            'bilhete unico', 'bilhete único', 'cartao riocard', 'supervia',
+            'cartão riocard', 'metrocard', 'ricard',
+            # Estacionamento
+            'estacionamento', 'parking', 'zona azul', 'parquimetro',
+            'estapar', 'multipark', 'autopark', 'valet',
+            # Outros transportes
+            'aviacao', 'aviação', 'gol', 'tam', 'azul', 'latam',
+            'rodoviaria', 'rodoviária', 'viacao', 'viação'
         ],
         'Entretenimento': [
-            'cinema', 'teatro', 'show', 'netflix', 'spotify', 'prime',
-            'ingresso', 'livraria', 'livros', 'jogos', 'game', 'steam',
-            'playstation', 'xbox', 'nintendo', 'hbo', 'disney'
+            # Streaming e música
+            'netflix', 'spotify', 'amazon prime', 'disney+', 'disney plus',
+            'hbo max', 'youtube premium', 'deezer', 'apple music', 'tidal',
+            'paramount+', 'globoplay', 'crunchyroll', 'twitch', 'prime video',
+            # Jogos
+            'steam', 'playstation', 'psn', 'xbox', 'nintendo',
+            'epic games', 'battle.net', 'origin', 'uplay', 'gog',
+            # Cinema e eventos
+            'cinema', 'cinemark', 'kinoplex', 'teatro', 'show', 'evento', 
+            'ingresso', 'tickets', 'sympla', 'eventbrite', 'ticket360', 
+            'ingressorapido', 'livepass', 'ticketmaster',
+            # Bares e entretenimento noturno - apenas os que começam com ZIG
+            'zig'  # Esta palavra já é tratada separadamente na verificação especial
         ],
         'Self Care': [
-            'academia', 'farmacia', 'drogaria', 'pacheco', 'salao',
-            'cabelereiro', 'spa', 'massagem', 'medico', 'dentista',
-            'terapia', 'psicolog', 'nutri', 'personal', 'pilates',
-            'yoga', 'crossfit'
+            # Farmácias e saúde
+            'farmacia', 'farmácia', 'drogaria', 'droga', 'pacheco', 'raia', 
+            'drogasil', 'remedios', 'remédios', 'medicamentos', 'medicina',
+            # Consultas e exames
+            'consulta', 'medico', 'médico', 'dentista', 'psicólogo', 'psicologo',
+            'terapeuta', 'fisioterapeuta', 'nutricionista', 'exame',
+            'laboratorio', 'laboratório', 'clinica', 'clínica', 'hospital',
+            'plano de saude', 'plano de saúde', 'unimed', 'amil', 'bradesco saude',
+            # Beleza e estética
+            'salao', 'salão', 'cabelereiro', 'cabeleireiro', 'manicure',
+            'pedicure', 'spa', 'massagem', 'estetica', 'estética',
+            'barbearia', 'barber', 'depilacao', 'depilação', 'beauty',
+            'nail', 'designer', 'sobrancelha',
+            # Academia e fitness
+            'academia', 'gym', 'crossfit', 'pilates', 'yoga', 'personal',
+            'trainer', 'box', 'fitness', 'smart fit', 'bodytech', 'selfit',
+            'bio ritmo', 'competition', 'runner'
         ],
         'Roupas': [
-            'amazon', 'americanas', 'magalu', 'mercado livre', 'shopee',
-            'aliexpress', 'shein', 'renner', 'riachuelo', 'cea', 'zara',
-            'nike', 'adidas', 'puma', 'centauro', 'decathlon', 'dafiti',
-            'netshoes', 'natura', 'avon', 'boticario', 'sephora'
+            # Lojas de departamento
+            'renner', 'cea', 'c&a', 'riachuelo', 'marisa', 'hering',
+            'zara', 'forever 21', 'leader', 'h&m', 'uniqlo', 'gap',
+            # Lojas de esporte
+            'centauro', 'decathlon', 'netshoes', 'nike', 'adidas', 'puma',
+            'olympikus', 'mizuno', 'fila', 'under armour',
+            # E-commerce e marketplace
+            'amazon', 'americanas', 'submarino', 'magalu', 'magazine luiza',
+            'shopee', 'aliexpress', 'shein', 'mercado livre', 'mercadolivre',
+            'kabum', 'extra.com', 'casasbahia.com',
+            # Lojas físicas e departamento
+            'casas bahia', 'ponto frio', 'fastshop', 'leroy merlin',
+            'telhanorte', 'c&c', 'tok&stok', 'etna', 'camicado', 'mobly',
+            'ricardo eletro', 'magazine', 'carrefour',
+            # Palavras genéricas de compras
+            'loja', 'shopping', 'compras', 'eletronicos', 'eletrônicos',
+            'livraria', 'livro', 'papelaria', 'material', 'casa', 'decoracao', 'decoração'
         ]
     }
-    
+
+    # Procurar por correspondências nas categorias
     for categoria, palavras_chave in categorias.items():
         if any(palavra in descricao for palavra in palavras_chave):
             return categoria
-    return 'Outros' 
+
+    return "Roupas" 

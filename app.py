@@ -17,7 +17,7 @@ from historico_faturas import (
     obter_parcelas_mes, calcular_total_parcelas_futuras,
     obter_parcelas_futuras, obter_historico_gastos_mensais,
     obter_historico_categorias, obter_media_gastos_categoria,
-    obter_evolucao_gastos, classificar_transacao
+    obter_evolucao_gastos
 )
 import json
 import yaml
@@ -103,12 +103,27 @@ def remover_regra_classificacao(palavra_chave):
     return False
 
 def aplicar_regras_classificacao(descricao):
-    """Aplica as regras de classificação definidas pelo usuário"""
+    """
+    Aplica as regras de classificação definidas pelo usuário.
+    
+    Args:
+        descricao (str): Descrição da transação
+        
+    Returns:
+        str|None: Categoria encontrada ou None se nenhuma regra se aplicar
+    """
     regras = carregar_regras_classificacao()
-    descricao_lower = descricao.lower()
+    descricao_lower = descricao.lower().strip()
+    
+    # Debug: Verificar se há regras carregadas
+    if not regras:
+        return None
     
     for regra in regras:
-        if regra['palavra_chave'] in descricao_lower:
+        palavra_chave = regra['palavra_chave'].lower().strip()
+        # Verificar se a palavra-chave está presente na descrição
+        if palavra_chave in descricao_lower:
+            # Debug: Regra encontrada
             return regra['categoria']
     
     return None
@@ -251,7 +266,7 @@ def atualizar_classificacao_salva(descricao, categoria):
 
 def editar_categoria_transacao(fatura_mes, fatura_ano, descricao, valor, nova_categoria):
     """
-    Edita a categoria de uma transação e salva a nova classificação para uso futuro.
+    Edita a categoria de uma transação.
     """
     dados = carregar_dados()
     faturas = dados.get('faturas', [])
@@ -260,23 +275,7 @@ def editar_categoria_transacao(fatura_mes, fatura_ano, descricao, valor, nova_ca
         if fatura['mes'] == fatura_mes and fatura['ano'] == fatura_ano:
             for transacao in fatura['transacoes']:
                 if transacao['descricao'] == descricao and abs(transacao['valor'] - valor) < 0.01:
-                    # Se a nova categoria for ENTRADA, mover para entradas
-                    if nova_categoria == "ENTRADA":
-                        entradas = dados.get('entradas', [])
-                        entrada = {
-                            'descricao': transacao['descricao'],
-                            'valor': transacao['valor'],
-                            'mes': fatura_mes,
-                            'ano': fatura_ano
-                        }
-                        entradas.append(entrada)
-                        dados['entradas'] = entradas
-                        # Remover da lista de transações
-                        fatura['transacoes'].remove(transacao)
-                    else:
-                        transacao['categoria'] = nova_categoria
-                        # Salvar a classificação para uso futuro
-                        atualizar_classificacao_salva(descricao, nova_categoria)
+                    transacao['categoria'] = nova_categoria
                     break
     
     salvar_dados(dados)
@@ -284,68 +283,59 @@ def editar_categoria_transacao(fatura_mes, fatura_ano, descricao, valor, nova_ca
 def classificar_transacao(descricao):
     """
     Classifica automaticamente uma transação com base em sua descrição.
-    Primeiro verifica regras especiais, depois regras do usuário, depois classificações salvas, depois usa as regras automáticas.
     """
     descricao_original = descricao
     descricao = descricao.lower().strip()
     
-    # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE (ANTES DE TUDO)
-    if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
-        print(f"DEBUG: Classificando '{descricao}' como Transporte devido à regra 99app")  # Debug
-        # Também salva a classificação para uso futuro
-        atualizar_classificacao_salva(descricao, 'Transporte')
-        return 'Transporte'
-    
-    # VERIFICAÇÕES ESPECIAIS PARA ROUPAS (antes de verificar mercado)
-    if 'mercado livre' in descricao or 'mercadolivre' in descricao:
-        return 'Roupas'
-    
-    # Verificar se contém "estorno" ou "desconto" (deve ser entrada, não despesa)
-    if 'estorno' in descricao or 'desconto' in descricao:
-        return "ENTRADA"
-    
-    # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
+    # APLICAR REGRAS DO USUÁRIO (palavras-chave definidas pelo usuário)
     categoria_regra = aplicar_regras_classificacao(descricao)
     if categoria_regra:
         return categoria_regra
     
-    # Verificar se é Zig* (entretenimento)
+    # VERIFICAÇÕES ESPECIAIS HARDCODED
+    # 99APP - Regra especial para transporte
+    if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
+        return 'Transporte'
+    
+    # Mercado Livre - Regra especial para roupas
+    if 'mercado livre' in descricao or 'mercadolivre' in descricao:
+        return 'Roupas'
+    
+    # Zig* - Regra especial para entretenimento
     if descricao.startswith('zig'):
         return 'Entretenimento'
     
-    # Verificar se já existe uma classificação salva
+    # Verificar se já existe uma classificação automática salva
     classificacoes_salvas = carregar_classificacoes_salvas()
     if descricao in classificacoes_salvas:
         return classificacoes_salvas[descricao]
 
-    # Verificar se é uma entrada
-    palavras_entrada = ['reembolso', 'cashback', 'rendimento', 'pagamento recebido', 'transferencia recebida']
-    if any(palavra in descricao for palavra in palavras_entrada):
-        return "ENTRADA"
-
-    # Dicionário de estabelecimentos por categoria
+    # Dicionário de estabelecimentos por categoria - VERSÃO COMPLETA
     categorias = {
         'Alimentação': [
-            # Restaurantes e similares
+            # Delivery e apps
+            'ifood', 'rappi', 'uber eats', 'james delivery', 'aiqfome', 'zomato', 'loggi',
+            # Restaurantes genéricos
             'restaurante', 'rest.', 'rest ', 'churrascaria', 'pizzaria', 'pizza',
             'hamburger', 'burger', 'lanchonete', 'bar', 'boteco', 'cantina',
             'galeto', 'padaria', 'confeitaria', 'doceria', 'cafeteria', 'café',
             'bistro', 'buffet', 'grill', 'espeto', 'pastelaria', 'pastel',
             'rotisserie', 'sushi', 'japanese', 'china in box', 'chinesa', 'thai',
-            'mexicano', 'árabe', 'arabe', 'absurda', 'ferro e farinha',
+            'mexicano', 'árabe', 'arabe', 'ferro e farinha', 'lancheria',
+            # Redes grandes
             'outback', 'mcdonalds', 'mc donalds', 'burger king', 'bk', 'subway',
             'habibs', 'spoleto', 'giraffas', 'madero', 'dominos', 'pizza hut',
-            'starbucks', 'kopenhagen', 'cacau show',
-            # Delivery
-            'ifood', 'rappi', 'uber eats', 'james delivery', 'aiqfome',
-            # Mercados e similares
-            'carrefour', 'extra', 'pao de acucar', 'assai', 'mundial', 'guanabara',
-            'zona sul', 'hortifruti', 'supermarket', 'mercado', 'supermercado',
-            'sacolao', 'feira', 'mercearia', 'atacado', 'atacadao', 'dia',
-            'sams club', 'makro', 'tenda', 'quitanda', 'adega', 'emporio',
-            'armazem', 'minimercado', 'mercadinho', 'acougue', 'açougue',
+            'starbucks', 'kopenhagen', 'cacau show', 'bob beef', 'bobs',
+            'kfc', 'popeyes', 'subway', 'dairy queen',
+            # Mercados e supermercados
+            'carrefour', 'extra', 'pao de acucar', 'pão de açúcar', 'assai', 'atacadao', 'atacadão',
+            'mundial', 'guanabara', 'zona sul', 'hortifruti', 'supermarket', 'mercado',
+            'supermercado', 'sacolao', 'feira', 'mercearia', 'atacado', 'dia',
+            'sams club', 'makro', 'tenda', 'quitanda', 'adega', 'emporio', 'empório',
+            'armazem', 'armazém', 'minimercado', 'mercadinho', 'acougue', 'açougue',
             'peixaria', 'supernosso', 'verdemar', 'epa', 'super', 'mart',
-            # Restaurantes específicos baseados nos dados históricos
+            'big box', 'walmart', 'central', 'prezunic', 'carioca',
+            # Restaurantes específicos do RJ
             'bendita chica', 'bendita', 'chica', 'amen gavea', 'amen',
             'art food', 'abbraccio', 'braseiro', 'gavea', 'nama',
             'nanquim', 'posi mozza', 'posi', 'mozza', 'smoov', 'sucos',
@@ -353,64 +343,85 @@ def classificar_transacao(descricao):
             'jobi', 'scarpi', 'tintin', 'choperiakaraoke', 'chopp',
             'casa do alemao', 'alemao', 'tabacaria', 'cafeteria',
             'woods wine', 'woods', 'wine', 'reserva 11', 'beach club',
-            'zig', 'caza', 'lagoa', 'sheesh', 'downtown', 'galeto',
-            'rainha', 'leblon', 'natural delli', 'buffet', 'food'
+            'sheesh', 'downtown', 'rainha', 'leblon', 'natural delli',
+            'absurda', 'confeitaria', 'bacio di latte', 'yogoberry',
+            'galeto leblon', 'galeto rainha', 'pavilhao', 'sardinha',
+            'la guapa', 'lena park', 'pasta basta', 'stuzzi',
+            # Palavras-chave gerais
+            'food', 'caza', 'lagoa', 'buffet', 'lanches', 'refeicao', 'refeição',
+            'comida', 'bebida', 'alimentacao', 'alimentação'
         ],
         'Transporte': [
-            # Apps de transporte (removido 99 pois já está tratado acima)
-            'uber', 'cabify', 'taxi', 'táxi', 'transfer', 'shuttle', 'buser',
-            # Combustível
+            # Apps de transporte (99app já tratado separadamente)
+            'uber', 'uber*', 'uber x', 'uber eats', '99 pop', '99pop', 'cabify', 
+            'taxi', 'táxi', 'transfer', 'shuttle', 'buser', 'blablacar',
+            # Combustível e postos
             'posto', 'shell', 'ipiranga', 'petrobras', 'br posto', 'ale',
-            'combustivel', 'gasolina', 'etanol', 'diesel', 'br mania',
+            'combustivel', 'combustível', 'gasolina', 'etanol', 'diesel', 
+            'alcool', 'álcool', 'br mania', 'texaco', 'esso',
             # Transporte público
             'metro', 'metrô', 'trem', 'onibus', 'ônibus', 'brt', 'vlt',
             'bilhete unico', 'bilhete único', 'cartao riocard', 'supervia',
-            'cartão riocard', 'bom', 'bem', 'metrocard',
+            'cartão riocard', 'metrocard', 'ricard',
             # Estacionamento
             'estacionamento', 'parking', 'zona azul', 'parquimetro',
-            'estapar', 'multipark', 'autopark','99app'
+            'estapar', 'multipark', 'autopark', 'valet',
+            # Outros transportes
+            'aviacao', 'aviação', 'gol', 'tam', 'azul', 'latam',
+            'rodoviaria', 'rodoviária', 'viacao', 'viação'
         ],
         'Entretenimento': [
-            # Streaming
-            'netflix', 'spotify', 'amazon prime', 'disney+', 'hbo max',
-            'youtube premium', 'deezer', 'apple music', 'tidal',
-            'paramount+', 'globoplay', 'crunchyroll', 'twitch',
+            # Streaming e música
+            'netflix', 'spotify', 'amazon prime', 'disney+', 'disney plus',
+            'hbo max', 'youtube premium', 'deezer', 'apple music', 'tidal',
+            'paramount+', 'globoplay', 'crunchyroll', 'twitch', 'prime video',
             # Jogos
             'steam', 'playstation', 'psn', 'xbox', 'nintendo',
             'epic games', 'battle.net', 'origin', 'uplay', 'gog',
-            # Eventos
-            'cinema', 'teatro', 'show', 'evento', 'ingresso', 'tickets',
-            'sympla', 'eventbrite', 'ticket360', 'ingressorapido',
-            'livepass', 'ticketmaster', 'cinemark', 'kinoplex'
+            # Cinema e eventos
+            'cinema', 'cinemark', 'kinoplex', 'teatro', 'show', 'evento', 
+            'ingresso', 'tickets', 'sympla', 'eventbrite', 'ticket360', 
+            'ingressorapido', 'livepass', 'ticketmaster',
+            # Bares e entretenimento noturno - apenas os que começam com ZIG
+            'zig'  # Esta palavra já é tratada separadamente na verificação especial
         ],
         'Self Care': [
-            # Saúde
-            'farmacia', 'drogaria', 'droga', 'pacheco', 'raia', 'drogasil',
-            'farmácia', 'remedios', 'remédios', 'medicamentos', 'consulta',
-            'medico', 'médico', 'dentista', 'psicólogo', 'psicologo',
+            # Farmácias e saúde
+            'farmacia', 'farmácia', 'drogaria', 'droga', 'pacheco', 'raia', 
+            'drogasil', 'remedios', 'remédios', 'medicamentos', 'medicina',
+            # Consultas e exames
+            'consulta', 'medico', 'médico', 'dentista', 'psicólogo', 'psicologo',
             'terapeuta', 'fisioterapeuta', 'nutricionista', 'exame',
             'laboratorio', 'laboratório', 'clinica', 'clínica', 'hospital',
-            'plano de saude', 'plano de saúde',
-            # Beleza
+            'plano de saude', 'plano de saúde', 'unimed', 'amil', 'bradesco saude',
+            # Beleza e estética
             'salao', 'salão', 'cabelereiro', 'cabeleireiro', 'manicure',
             'pedicure', 'spa', 'massagem', 'estetica', 'estética',
             'barbearia', 'barber', 'depilacao', 'depilação', 'beauty',
-            # Academia
+            'nail', 'designer', 'sobrancelha',
+            # Academia e fitness
             'academia', 'gym', 'crossfit', 'pilates', 'yoga', 'personal',
-            'trainer', 'box', 'fitness', 'smart fit', 'bodytech', 'selfit'
+            'trainer', 'box', 'fitness', 'smart fit', 'bodytech', 'selfit',
+            'bio ritmo', 'competition', 'runner'
         ],
         'Roupas': [
-            # Lojas de departamento e vestuário (removido shop/store para evitar falsos positivos)
+            # Lojas de departamento
             'renner', 'cea', 'c&a', 'riachuelo', 'marisa', 'hering',
-            'zara', 'forever 21', 'leader', 'h&m',
+            'zara', 'forever 21', 'leader', 'h&m', 'uniqlo', 'gap',
             # Lojas de esporte
             'centauro', 'decathlon', 'netshoes', 'nike', 'adidas', 'puma',
-            # Lojas online
+            'olympikus', 'mizuno', 'fila', 'under armour',
+            # E-commerce e marketplace
             'amazon', 'americanas', 'submarino', 'magalu', 'magazine luiza',
-            'shopee', 'aliexpress', 'shein', 'mercado livre', 'kabum',
-            # Outras lojas
+            'shopee', 'aliexpress', 'shein', 'mercado livre', 'mercadolivre',
+            'kabum', 'extra.com', 'casasbahia.com',
+            # Lojas físicas e departamento
             'casas bahia', 'ponto frio', 'fastshop', 'leroy merlin',
-            'telhanorte', 'c&c', 'tok&stok', 'etna', 'camicado', 'mobly'
+            'telhanorte', 'c&c', 'tok&stok', 'etna', 'camicado', 'mobly',
+            'ricardo eletro', 'magazine', 'carrefour',
+            # Palavras genéricas de compras
+            'loja', 'shopping', 'compras', 'eletronicos', 'eletrônicos',
+            'livraria', 'livro', 'papelaria', 'material', 'casa', 'decoracao', 'decoração'
         ]
     }
 
@@ -419,7 +430,7 @@ def classificar_transacao(descricao):
         if any(palavra in descricao for palavra in palavras_chave):
             return categoria
 
-    return "Outros"
+    return "Roupas"
 
 def adicionar_fatura(fatura):
     """Adiciona uma nova fatura ao histórico"""
@@ -431,11 +442,10 @@ def adicionar_fatura(fatura):
     entradas = dados.get('entradas', [])
     
     for transacao in fatura['transacoes']:
-        if 'categoria' not in transacao:
-            transacao['categoria'] = classificar_transacao(transacao['descricao'])
+        descricao_lower = transacao['descricao'].lower()
         
-        # Se for estorno/entrada, mover para entradas
-        if transacao['categoria'] == "ENTRADA":
+        # VERIFICAR PRIMEIRO se é estorno/desconto (vai para entradas)
+        if 'estorno' in descricao_lower or 'desconto' in descricao_lower:
             entrada = {
                 'descricao': transacao['descricao'],
                 'valor': transacao['valor'],
@@ -444,7 +454,9 @@ def adicionar_fatura(fatura):
             }
             entradas.append(entrada)
         else:
-            # Se não for entrada, manter como despesa
+            # Se não for entrada, classificar normalmente e manter como despesa
+            if 'categoria' not in transacao:
+                transacao['categoria'] = classificar_transacao(transacao['descricao'])
             transacoes_despesas.append(transacao)
     
     # Atualizar a fatura apenas com despesas
@@ -551,8 +563,31 @@ def corrigir_classificacoes_restaurantes():
 def limpar_fatura(mes, ano):
     """
     Remove todos os dados da fatura do mês e ano selecionados.
+    Inclui: transações, entradas e gastos fixos específicos do mês.
+    IMPORTANTE: O indicador visual (check verde) aparece apenas quando há FATURAS,
+    mas este botão remove todos os tipos de dados.
     """
     dados = carregar_dados()
+    
+    # Contar itens antes da remoção
+    faturas_removidas = 0
+    entradas_removidas = 0
+    gastos_fixos_removidos = 0
+    
+    # Contar faturas que serão removidas
+    for fatura in dados.get('faturas', []):
+        if fatura['mes'] == mes and fatura['ano'] == ano:
+            faturas_removidas += len(fatura.get('transacoes', []))
+    
+    # Contar entradas que serão removidas
+    if 'entradas' in dados:
+        entradas_removidas = len([
+            entrada for entrada in dados['entradas']
+            if entrada.get('mes') == mes and entrada.get('ano') == ano
+        ])
+    
+    # Contar gastos fixos
+    gastos_fixos_removidos = len(dados.get('gastos_fixos', []))
     
     # Encontrar e remover a fatura específica
     dados['faturas'] = [
@@ -560,33 +595,96 @@ def limpar_fatura(mes, ano):
         if not (fatura['mes'] == mes and fatura['ano'] == ano)
     ]
     
+    # Remover entradas específicas do mês
+    if 'entradas' in dados:
+        dados['entradas'] = [
+            entrada for entrada in dados['entradas']
+            if not (entrada.get('mes') == mes and entrada.get('ano') == ano)
+        ]
+    
+    # Remover gastos fixos específicos do mês (se tiverem referência de mês/ano)
+    # ou simplesmente limpar todos os gastos fixos (caso não tenham referência temporal)
+    if 'gastos_fixos' in dados:
+        # Como gastos fixos geralmente não têm referência temporal específica,
+        # vamos limpar todos os gastos fixos quando limpar o mês
+        dados['gastos_fixos'] = []
+    
     # Salvar os dados atualizados
     salvar_dados(dados)
-    st.success(f"✓ Fatura de {mes}/{ano} removida com sucesso!")
+    
+    # Exibir mensagens de sucesso com detalhes
+    st.success(f"✓ Todos os dados de {mes}/{ano} removidos com sucesso!")
+    
+    if faturas_removidas > 0:
+        st.success(f"  - {faturas_removidas} transações da fatura removidas")
+    else:
+        st.info("  - Nenhuma transação encontrada para remover")
+    
+    if entradas_removidas > 0:
+        st.success(f"  - {entradas_removidas} entradas do mês removidas")
+    else:
+        st.info("  - Nenhuma entrada encontrada para remover")
+    
+    if gastos_fixos_removidos > 0:
+        st.success(f"  - {gastos_fixos_removidos} gastos fixos removidos")
+    else:
+        st.info("  - Nenhum gasto fixo encontrado para remover")
+    
     time.sleep(0.5)
     st.rerun()
 
 def reaplicar_regras_todas_transacoes():
     """
-    Reaplica todas as regras de classificação às transações existentes
+    Reaplica todas as regras de classificação às transações existentes.
     """
     dados = carregar_dados()
     transacoes_atualizadas = 0
+    entradas = dados.get('entradas', [])
     
     # Aplicar regras às faturas
     for fatura in dados.get('faturas', []):
-        for transacao in fatura.get('transacoes', []):
-            categoria_original = transacao.get('categoria', '')
-            categoria_nova = classificar_transacao(transacao['descricao'])
+        transacoes_para_remover = []
+        
+        for i, transacao in enumerate(fatura.get('transacoes', [])):
+            descricao_lower = transacao['descricao'].lower().strip()
             
-            # Se a categoria mudou, atualizar
-            if categoria_original != categoria_nova:
-                transacao['categoria'] = categoria_nova
+            # Verificar se deve ir para entradas
+            if 'estorno' in descricao_lower or 'desconto' in descricao_lower:
+                # Mover para entradas
+                entrada = {
+                    'descricao': transacao['descricao'],
+                    'valor': transacao['valor'],
+                    'mes': fatura['mes'],
+                    'ano': fatura['ano']
+                }
+                entradas.append(entrada)
+                transacoes_para_remover.append(i)
                 transacoes_atualizadas += 1
+            else:
+                # Aplicar nova classificação
+                categoria_original = transacao.get('categoria', '')
+                categoria_nova = classificar_transacao(transacao['descricao'])
+                
+                if categoria_original != categoria_nova:
+                    transacao['categoria'] = categoria_nova
+                    transacoes_atualizadas += 1
+        
+        # Remover transações que foram movidas para entradas
+        for i in reversed(transacoes_para_remover):
+            del fatura['transacoes'][i]
+    
+    # Atualizar entradas nos dados
+    dados['entradas'] = entradas
     
     # Salvar os dados atualizados
     salvar_dados(dados)
-    return transacoes_atualizadas
+    
+    # Retornar informações sobre o que foi feito
+    return {
+        'atualizadas': transacoes_atualizadas
+    }
+
+
 
 # Configuração da página
 st.set_page_config(
@@ -659,12 +757,40 @@ elif authentication_status:
         </style>
     """, unsafe_allow_html=True)
 
-    # Seleção do mês
-    mes_options = {
+    # Função para verificar se há faturas para um mês específico
+    def tem_fatura_mes(mes, ano):
+        """
+        Verifica se há fatura salva para um mês específico.
+        
+        IMPORTANTE: Esta função determina se o check verde (✅) aparece no seletor de mês.
+        Verifica APENAS faturas, não entradas nem gastos fixos.
+        
+        Args:
+            mes (int): Número do mês (1-12)
+            ano (int): Ano (ex: 2024)
+            
+        Returns:
+            bool: True se há fatura salva para o mês/ano, False caso contrário
+        """
+        dados = carregar_dados()
+        
+        # Verificar apenas faturas (não entradas nem gastos fixos)
+        tem_faturas = any(
+            f['mes'] == mes and f['ano'] == ano 
+            for f in dados.get('faturas', [])
+        )
+        
+        return tem_faturas
+    
+    # Seleção do mês com indicadores visuais
+    mes_options_base = {
         'Janeiro': 1, 'Fevereiro': 2, 'Março': 3, 'Abril': 4,
         'Maio': 5, 'Junho': 6, 'Julho': 7, 'Agosto': 8,
         'Setembro': 9, 'Outubro': 10, 'Novembro': 11, 'Dezembro': 12
     }
+    
+    # Inicializar opções básicas de mês (serão atualizadas após seleção do ano)
+    mes_options = {nome: num for nome, num in mes_options_base.items()}
 
     # Funções de processamento
     @st.cache_data(ttl=600)
@@ -729,78 +855,7 @@ elif authentication_status:
             st.error(f"Erro ao processar o PDF: {str(e)}")
             return None
 
-    # Função para classificar transações
-    def classificar_transacao(descricao):
-        descricao = descricao.lower()
-        
-        # Verificar se contém "estorno" ou "desconto" (deve ser entrada, não despesa)
-        if 'estorno' in descricao or 'desconto' in descricao:
-            return "ENTRADA"
-        
-        # Verificar se é Zig* (entretenimento)
-        if descricao.startswith('zig'):
-            return 'Entretenimento'
-        
-        # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
-        if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
-            return "Transporte"
-        
-        # VERIFICAÇÕES ESPECIAIS PARA ROUPAS (antes de verificar mercado)
-        if 'mercado livre' in descricao or 'mercadolivre' in descricao:
-            return "Roupas"
-        
-        # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
-        categoria_regra = aplicar_regras_classificacao(descricao)
-        if categoria_regra:
-            return categoria_regra
-        
-        # Alimentação
-        if any(palavra in descricao for palavra in [
-            'ifood', 'rappi', 'uber eats', 'restaurante', 'padaria', 'mercado',
-            'supermercado', 'hortifruti', 'açougue', 'acougue', 'cafeteria',
-            'cafe', 'café', 'bar', 'lanchonete', 'food', 'burger',
-            # Restaurantes específicos
-            'bendita chica', 'bendita', 'chica', 'amen gavea', 'amen',
-            'art food', 'abbraccio', 'braseiro', 'gavea', 'nama',
-            'nanquim', 'posi mozza', 'posi', 'mozza', 'smoov', 'sucos',
-            'katzsu', 'eleninha', 'buddario', 'dri', 'jobi', 'scarpi',
-            'tintin', 'choperiakaraoke', 'chopp', 'alemao', 'tabacaria',
-            'woods wine', 'woods', 'wine', 'reserva 11', 'beach club',
-            'zig', 'caza', 'lagoa', 'sheesh', 'downtown', 'galeto',
-            'rainha', 'leblon', 'natural delli', 'buffet', 'absurda',
-            'confeitaria', 'zona sul'
-        ]):
-            return "Alimentação"
-        
-        # Transporte
-        if any(palavra in descricao for palavra in [
-            'uber', '99 pop', '99pop', 'taxi', 'táxi', 'combustivel', 'combustível',
-            'estacionamento', 'metro', 'metrô', 'onibus', 'ônibus', 'bilhete',
-            'posto', 'gasolina', 'etanol', 'alcool', 'álcool', 'uber*', 'uber x'
-        ]):
-            return "Transporte"
-        
-        # Entretenimento
-        if any(palavra in descricao for palavra in [
-            'netflix', 'spotify', 'cinema', 'teatro', 'show', 'ingresso',
-            'prime video', 'disney+', 'hbo', 'jogos', 'game', 'playstation',
-            'xbox', 'steam', 'livraria', 'livro', 'música', 'musica',
-            'streaming', 'assinatura'
-        ]):
-            return "Entretenimento"
-        
-        # Self Care
-        if any(palavra in descricao for palavra in [
-            'academia', 'farmacia', 'farmácia', 'drogaria', 'medico', 'médico',
-            'dentista', 'psicólogo', 'psicologo', 'terapia', 'spa', 'massagem',
-            'salao', 'salão', 'cabelereiro', 'manicure', 'pedicure', 'pilates',
-            'yoga', 'crossfit', 'gym', 'consulta', 'exame', 'clinica', 'clínica',
-            'hospital', 'remedio', 'remédio'
-        ]):
-            return "Self Care"
-        
-        # Roupas (incluindo o que antes era "Outros")
-        return "Roupas"
+    # Usar a função global classificar_transacao que tem toda a lógica necessária
 
     # Função auxiliar para formatar valores
     def formatar_valor(valor):
@@ -832,24 +887,73 @@ elif authentication_status:
         # Gerar um hash curto (8 caracteres) para garantir unicidade
         return hashlib.md5(chave_base.encode()).hexdigest()[:8]
 
-    # Criar tabs
+    # Criar seleção de mês e ano
     col1, col2 = st.columns([2, 1])
-    with col1:
-        mes_selecionado = st.selectbox(
-            "Selecione o Mês",
-            options=list(mes_options.keys()),
-            index=datetime.now().month - 1
-        )
-        # Definir mes_num logo após a seleção
-        mes_num = mes_options[mes_selecionado]
-
+    
     with col2:
         ano_atual = datetime.now().year
         ano_selecionado = st.selectbox(
             "Ano",
             options=range(ano_atual-2, ano_atual+1),
-            index=2
+            index=2,
+            key="ano_selecionado"
         )
+    
+    # Recriar opções do mês com base no ano selecionado
+    mes_options = {}
+    for nome_mes, num_mes in mes_options_base.items():
+        if tem_fatura_mes(num_mes, ano_selecionado):
+            mes_options[f"✅ {nome_mes}"] = num_mes
+        else:
+            mes_options[f"⚪ {nome_mes}"] = num_mes
+
+    with col1:
+        opcoes_mes = list(mes_options.keys())
+        
+        # Verificar se há uma solicitação para manter um mês específico (após upload)
+        if 'mes_manter_selecao' in st.session_state:
+            mes_para_manter = st.session_state['mes_manter_selecao']
+            # Procurar o mês nas opções (pode estar com ✅ ou ⚪)
+            for opcao in opcoes_mes:
+                if mes_para_manter in opcao:
+                    st.session_state.mes_selecionado = opcao
+                    break
+            # Limpar a flag
+            del st.session_state['mes_manter_selecao']
+        
+        # Inicializar com mês atual apenas se não existir no session_state
+        elif 'mes_selecionado' not in st.session_state:
+            mes_atual = datetime.now().month
+            nome_mes_atual = list(mes_options_base.keys())[mes_atual - 1]
+            
+            # Procurar a opção do mês atual (com ou sem check)
+            for opcao in opcoes_mes:
+                if nome_mes_atual in opcao:
+                    st.session_state.mes_selecionado = opcao
+                    break
+            else:
+                # Se não encontrar, usar o primeiro da lista
+                st.session_state.mes_selecionado = opcoes_mes[0]
+        
+        # Verificar se a seleção atual ainda existe nas opções (após mudança de ano)
+        elif st.session_state.mes_selecionado not in opcoes_mes:
+            # Se a seleção atual não existe mais, encontrar equivalente sem/com check
+            mes_limpo = st.session_state.mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+            for opcao in opcoes_mes:
+                if mes_limpo in opcao:
+                    st.session_state.mes_selecionado = opcao
+                    break
+            else:
+                st.session_state.mes_selecionado = opcoes_mes[0]
+        
+        mes_selecionado = st.selectbox(
+            "Selecione o Mês",
+            options=opcoes_mes,
+            help="✅ indica meses com faturas salvas",
+            key="mes_selecionado"
+        )
+        # Definir mes_num logo após a seleção
+        mes_num = mes_options[mes_selecionado]
 
     # Criar tabs
     tab_inserir, tab_entradas, tab_analise, tab_parcelas, tab_fixos, tab_historico = st.tabs([
@@ -887,16 +991,82 @@ elif authentication_status:
                                 'transacoes': df.to_dict('records')
                             }
                             adicionar_fatura(fatura)
-                            st.success(f"Fatura de {mes_selecionado}/{ano_selecionado} salva com sucesso!")
+                            # Limpar nome do mês de checks visuais para exibição
+                            nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                            st.success(f"Fatura de {nome_mes_limpo}/{ano_selecionado} salva com sucesso!")
+                            
+                            # Manter a seleção do mês atual (nome limpo) para o próximo rerun
+                            st.session_state['mes_manter_selecao'] = nome_mes_limpo
+                            st.rerun()  # Atualizar indicadores visuais
                         except Exception as e:
                             st.error(f"Erro ao salvar fatura: {str(e)}")
                 else:
                     st.warning("Por favor, faça upload de uma fatura primeiro.")
         
         with col2:
-            if st.button("🗑️ Limpar Dados do Mês", use_container_width=True):
-                limpar_fatura(mes_num, ano_selecionado)
-                st.success(f"Dados de {mes_selecionado}/{ano_selecionado} removidos!")
+            # Contar dados existentes para o mês selecionado
+            dados_existentes = carregar_dados()
+            
+            # Contar itens do mês atual
+            transacoes_mes = 0
+            for fatura in dados_existentes.get('faturas', []):
+                if fatura['mes'] == mes_num and fatura['ano'] == ano_selecionado:
+                    transacoes_mes += len(fatura.get('transacoes', []))
+            
+            entradas_mes = len([
+                e for e in dados_existentes.get('entradas', [])
+                if e.get('mes') == mes_num and e.get('ano') == ano_selecionado
+            ])
+            
+            gastos_fixos_total = len(dados_existentes.get('gastos_fixos', []))
+            
+            # Verificar se há fatura (para mostrar estado correto do botão)
+            tem_fatura = tem_fatura_mes(mes_num, ano_selecionado)
+            
+            # Inicializar estado do botão de confirmação
+            if f'confirm_clear_{mes_num}_{ano_selecionado}' not in st.session_state:
+                st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = False
+            
+            if not st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}']:
+                # Mostrar botão com preview dos dados
+                total_itens = transacoes_mes + entradas_mes + gastos_fixos_total
+                
+                if total_itens > 0:
+                    # Diferentes textos baseados no que tem
+                    if tem_fatura:
+                        botao_texto = f"🗑️ Limpar TODOS os Dados do Mês ({total_itens} itens)"
+                    else:
+                        botao_texto = f"🗑️ Limpar Dados do Mês ({total_itens} itens - sem fatura)"
+                    
+                    if st.button(botao_texto, use_container_width=True, type="secondary"):
+                        st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = True
+                        st.rerun()
+                else:
+                    st.button("🗑️ Limpar TODOS os Dados do Mês (vazio)", use_container_width=True, disabled=True)
+            else:
+                st.error("⚠️ **CONFIRMAÇÃO NECESSÁRIA**")
+                # Limpar nome do mês de checks visuais para exibição
+                nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                st.warning(f"Isso vai apagar TODOS os dados de {nome_mes_limpo}/{ano_selecionado}:")
+                if transacoes_mes > 0:
+                    st.write(f"• {transacoes_mes} transações da fatura")
+                if entradas_mes > 0:
+                    st.write(f"• {entradas_mes} entradas registradas")
+                if gastos_fixos_total > 0:
+                    st.write(f"• {gastos_fixos_total} gastos fixos")
+                if transacoes_mes == 0 and entradas_mes == 0 and gastos_fixos_total == 0:
+                    st.write("• Nenhum dado encontrado para remover")
+                st.write("")
+                
+                col2a, col2b = st.columns(2)
+                with col2a:
+                    if st.button("✅ SIM, Apagar Tudo", use_container_width=True, type="primary"):
+                        limpar_fatura(mes_num, ano_selecionado)
+                        st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = False
+                with col2b:
+                    if st.button("❌ Cancelar", use_container_width=True):
+                        st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = False
+                        st.rerun()
 
     # Na aba de Entradas do Mês
     with tab_entradas:
@@ -924,6 +1094,10 @@ elif authentication_status:
                     if valor_entrada > 0 and descricao_entrada:
                         adicionar_entrada(mes_num, ano_selecionado, valor_entrada, descricao_entrada, tipo_entrada)
                         st.success("✓ Entrada adicionada com sucesso!")
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
+                        st.rerun()  # Atualizar indicadores visuais
                     else:
                         st.error("Por favor, preencha todos os campos.")
 
@@ -961,6 +1135,9 @@ elif authentication_status:
                             entrada['descricao'],
                             entrada.get('tipo', 'Outros')
                         )
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
                         st.rerun()
                         
                 # Linha fina entre itens
@@ -1037,6 +1214,17 @@ elif authentication_status:
                             if palavra_chave and categoria_regra:
                                 if adicionar_regra_classificacao(palavra_chave, categoria_regra):
                                     st.success(f"✓ Regra criada: '{palavra_chave}' → {categoria_regra}")
+                                    
+                                    # Aplicar a regra imediatamente às transações existentes
+                                    with st.spinner("Aplicando regra às transações existentes..."):
+                                        resultado = reaplicar_regras_todas_transacoes()
+                                        if resultado['atualizadas'] > 0:
+                                            st.success(f"✓ Regra aplicada a {resultado['atualizadas']} transações!")
+                                    
+                                    # Manter a seleção do mês atual
+                                    nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                                    st.session_state['mes_manter_selecao'] = nome_mes_limpo
+                                    
                                     time.sleep(0.5)
                                     st.rerun()
                                 else:
@@ -1079,30 +1267,72 @@ elif authentication_status:
                     st.info("Nenhuma regra automática criada ainda.")
                     st.write("Use a aba 'Regras Automáticas' para criar sua primeira regra!")
                 
-                # Botão para reaplicar regras às transações existentes
+                # Teste das regras - mostrar quantas transações seriam afetadas
                 st.markdown("---")
-                st.write("**Aplicar Regras às Transações Existentes**")
-                st.info("⚠️ Esta ação irá reaplicar todas as regras às transações já cadastradas, atualizando suas categorias.")
+                if st.button("🔍 Testar Regras nas Transações Atuais", use_container_width=True):
+                    with st.spinner("Testando regras..."):
+                        dados = carregar_dados()
+                        regras = carregar_regras_classificacao()
+                        
+                        if not regras:
+                            st.warning("❌ Nenhuma regra criada ainda!")
+                        else:
+                            st.write("### Teste das Regras:")
+                            
+                            for regra in regras:
+                                st.write(f"**Regra:** '{regra['palavra_chave']}' → {regra['categoria']}")
+                                
+                                # Contar transações que batem com esta regra
+                                transacoes_encontradas = []
+                                for fatura in dados.get('faturas', []):
+                                    for transacao in fatura.get('transacoes', []):
+                                        desc = transacao['descricao'].lower().strip()
+                                        palavra = regra['palavra_chave'].lower().strip()
+                                        if palavra in desc:
+                                            transacoes_encontradas.append({
+                                                'descricao': transacao['descricao'],
+                                                'categoria_atual': transacao.get('categoria', 'Não definida'),
+                                                'mes': fatura['mes'],
+                                                'ano': fatura['ano']
+                                            })
+                                
+                                if transacoes_encontradas:
+                                    st.success(f"✅ {len(transacoes_encontradas)} transações encontradas:")
+                                    for i, t in enumerate(transacoes_encontradas[:5]):  # Mostrar apenas as 5 primeiras
+                                        categoria_icon = "🔒" if t['categoria_atual'] == regra['categoria'] else "📝"
+                                        st.write(f"  {categoria_icon} {t['descricao']} (atual: {t['categoria_atual']})")
+                                    if len(transacoes_encontradas) > 5:
+                                        st.write(f"  ... e mais {len(transacoes_encontradas) - 5} transações")
+                                else:
+                                    st.info(f"ℹ️ Nenhuma transação encontrada com '{regra['palavra_chave']}'")
+                                st.write("")
                 
-                col1, col2 = st.columns([1, 1])
-                with col1:
-                    if st.button("🔄 Reaplicar Regras", type="primary"):
-                        with st.spinner("Atualizando transações..."):
-                            transacoes_atualizadas = reaplicar_regras_todas_transacoes()
-                            if transacoes_atualizadas > 0:
-                                st.success(f"✓ {transacoes_atualizadas} transações atualizadas com sucesso!")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.info("Nenhuma transação precisou ser atualizada.")
-                
-                with col2:
-                    st.write("**Como funciona:**")
-                    st.write("- Analisa todas as transações")
-                    st.write("- Aplica regras personalizadas")
-                    st.write("- Atualiza categorias automaticamente")
-        
-
+                # Botão para reaplicar regras
+                if st.button("🔄 Reaplicar Regras a Todas as Transações", use_container_width=True):
+                    with st.spinner("Reaplicando regras..."):
+                        # Limpar cache para garantir que as regras mais recentes sejam carregadas
+                        st.cache_data.clear()
+                        
+                        resultado = reaplicar_regras_todas_transacoes()
+                        
+                        # Mostrar resultado detalhado
+                        if resultado['atualizadas'] > 0:
+                            st.success(f"✅ Reaplicação concluída!")
+                            st.success(f"📝 {resultado['atualizadas']} transações foram atualizadas com novas regras")
+                                
+                            # Mostrar quais regras foram aplicadas
+                            regras = carregar_regras_classificacao()
+                            if regras:
+                                st.write("**Regras aplicadas:**")
+                                for regra in regras:
+                                    st.write(f"• '{regra['palavra_chave']}' → {regra['categoria']}")
+                        else:
+                            st.info("ℹ️ Nenhuma transação foi modificada - todas já estão classificadas corretamente!")
+                        
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
+                        st.rerun()
         
         # Carregar dados
         dados = carregar_dados()
@@ -1134,8 +1364,15 @@ elif authentication_status:
             else:
                 df.loc[i, 'categoria'] = classificar_transacao(transacao['descricao'])
         
-        # Calcular totais por categoria
+        # Filtrar transações com categoria ENTRADA (não devem aparecer na análise)
+        df = df[df['categoria'] != 'ENTRADA']
+        
+        # Calcular totais por categoria (filtrar ENTRADA se existir)
         totais_categoria = df.groupby('categoria')['valor'].sum().sort_values(ascending=False)
+        
+        # Remover categoria ENTRADA se existir (não deve aparecer na análise)
+        if 'ENTRADA' in totais_categoria.index:
+            totais_categoria = totais_categoria.drop('ENTRADA')
 
         # Calcular total geral
         total_atual = totais_categoria.sum()
@@ -1265,11 +1502,21 @@ elif authentication_status:
                         # Se o botão de edição foi clicado, mostrar o formulário
                         if st.session_state.get(f'editing_{idx}', False):
                             with st.form(f"form_transacao_{idx}", clear_on_submit=True):
+                                # Garantir que a categoria existe na lista
+                                categoria_atual = transacao['categoria']
+                                try:
+                                    index_categoria = categorias.index(categoria_atual)
+                                except ValueError:
+                                    # Se a categoria não existir, adicionar à lista e usar como índice
+                                    categorias.append(categoria_atual)
+                                    salvar_categorias(categorias)
+                                    index_categoria = len(categorias) - 1
+                                
                                 nova_categoria = st.selectbox(
                                     "Categoria",
                                     options=categorias,  # Usar categorias do arquivo
                                     key=f"cat_{idx}",
-                                    index=categorias.index(transacao['categoria'])
+                                    index=index_categoria
                                 )
                                 
                                 is_fixo = st.checkbox("Marcar como gasto fixo", key=f"fix_{idx}")
@@ -1342,10 +1589,23 @@ elif authentication_status:
                     else:
                         df_fatura.loc[i, 'categoria'] = classificar_transacao(transacao['descricao'])
                 
+                # Filtrar transações com categoria ENTRADA
+                df_fatura = df_fatura[df_fatura['categoria'] != 'ENTRADA']
+                
+                # Se não sobrou nenhuma transação, pular
+                if df_fatura.empty:
+                    continue
+                
                 # Calcular totais por categoria
                 totais_fatura = df_fatura.groupby('categoria')['valor'].sum()
                 meses_dados[mes_ano]['categorias'] = totais_fatura.to_dict()
-                categorias_todas.update(totais_fatura.index.tolist())
+                
+                # Adicionar categorias (excluindo ENTRADA)
+                categorias_grafico = [cat for cat in totais_fatura.index.tolist() if cat != 'ENTRADA']
+                categorias_todas.update(categorias_grafico)
+        
+        # Remover ENTRADA das categorias_todas como medida de segurança
+        categorias_todas.discard('ENTRADA')
         
         # Ordenar meses cronologicamente
         meses_ordenados = sorted(meses_dados.keys(), key=lambda x: (meses_dados[x]['ano'], meses_dados[x]['mes']))
@@ -1360,7 +1620,8 @@ elif authentication_status:
             # Criar barras para cada mês
             for i, mes in enumerate(meses_ordenados):
                 valores = []
-                categorias_ordenadas = sorted(categorias_todas)
+                # Filtrar categorias para remover ENTRADA
+                categorias_ordenadas = sorted([cat for cat in categorias_todas if cat != 'ENTRADA'])
                 
                 for categoria in categorias_ordenadas:
                     valor = meses_dados[mes].get('categorias', {}).get(categoria, 0)
@@ -1529,6 +1790,10 @@ elif authentication_status:
                         dados['gastos_fixos'].append(novo_gasto)
                         salvar_dados(dados)
                         st.success("✓ Gasto fixo adicionado com sucesso!")
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
+                        st.rerun()  # Atualizar indicadores visuais
                     else:
                         st.error("Por favor, preencha todos os campos.")
         
@@ -1551,6 +1816,9 @@ elif authentication_status:
                     if st.button("🗑️", key=f"del_fixo_{idx}", help="Deletar gasto fixo"):
                         dados['gastos_fixos'].remove(gasto)
                         salvar_dados(dados)
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
                         st.rerun()
                         
                 # Linha fina entre itens
@@ -1574,7 +1842,9 @@ elif authentication_status:
         # Criar DataFrame com histórico
         historico = []
         for fatura in faturas:
-            mes_ano = f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}"
+            # Usar nomes de mês limpos (sem checks) para o histórico
+            mes_nome = list(mes_options_base.keys())[int(fatura['mes'])-1]
+            mes_ano = f"{mes_nome}/{fatura['ano']}"
             total = sum(t['valor'] for t in fatura['transacoes'])
             historico.append({
                 'Mês': mes_ano,
