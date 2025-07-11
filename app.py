@@ -471,7 +471,7 @@ def classificar_transacao(descricao):
         if any(palavra in descricao for palavra in palavras_chave):
             return categoria
 
-    return "Outros"
+    return "Roupas"
 
 def adicionar_fatura(fatura):
     """Adiciona uma nova fatura ao histórico"""
