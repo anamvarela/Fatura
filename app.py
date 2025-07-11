@@ -537,8 +537,29 @@ def corrigir_classificacoes_restaurantes():
 def limpar_fatura(mes, ano):
     """
     Remove todos os dados da fatura do mês e ano selecionados.
+    Inclui: transações, entradas e gastos fixos específicos do mês.
     """
     dados = carregar_dados()
+    
+    # Contar itens antes da remoção
+    faturas_removidas = 0
+    entradas_removidas = 0
+    gastos_fixos_removidos = 0
+    
+    # Contar faturas que serão removidas
+    for fatura in dados.get('faturas', []):
+        if fatura['mes'] == mes and fatura['ano'] == ano:
+            faturas_removidas += len(fatura.get('transacoes', []))
+    
+    # Contar entradas que serão removidas
+    if 'entradas' in dados:
+        entradas_removidas = len([
+            entrada for entrada in dados['entradas']
+            if entrada.get('mes') == mes and entrada.get('ano') == ano
+        ])
+    
+    # Contar gastos fixos
+    gastos_fixos_removidos = len(dados.get('gastos_fixos', []))
     
     # Encontrar e remover a fatura específica
     dados['faturas'] = [
@@ -546,9 +567,41 @@ def limpar_fatura(mes, ano):
         if not (fatura['mes'] == mes and fatura['ano'] == ano)
     ]
     
+    # Remover entradas específicas do mês
+    if 'entradas' in dados:
+        dados['entradas'] = [
+            entrada for entrada in dados['entradas']
+            if not (entrada.get('mes') == mes and entrada.get('ano') == ano)
+        ]
+    
+    # Remover gastos fixos específicos do mês (se tiverem referência de mês/ano)
+    # ou simplesmente limpar todos os gastos fixos (caso não tenham referência temporal)
+    if 'gastos_fixos' in dados:
+        # Como gastos fixos geralmente não têm referência temporal específica,
+        # vamos limpar todos os gastos fixos quando limpar o mês
+        dados['gastos_fixos'] = []
+    
     # Salvar os dados atualizados
     salvar_dados(dados)
-    st.success(f"✓ Fatura de {mes}/{ano} removida com sucesso!")
+    
+    # Exibir mensagens de sucesso com detalhes
+    st.success(f"✓ Todos os dados de {mes}/{ano} removidos com sucesso!")
+    
+    if faturas_removidas > 0:
+        st.success(f"  - {faturas_removidas} transações da fatura removidas")
+    else:
+        st.info("  - Nenhuma transação encontrada para remover")
+    
+    if entradas_removidas > 0:
+        st.success(f"  - {entradas_removidas} entradas do mês removidas")
+    else:
+        st.info("  - Nenhuma entrada encontrada para remover")
+    
+    if gastos_fixos_removidos > 0:
+        st.success(f"  - {gastos_fixos_removidos} gastos fixos removidos")
+    else:
+        st.info("  - Nenhum gasto fixo encontrado para remover")
+    
     time.sleep(0.5)
     st.rerun()
 
@@ -672,12 +725,45 @@ elif authentication_status:
         </style>
     """, unsafe_allow_html=True)
 
-    # Seleção do mês
-    mes_options = {
+    # Função para verificar se há dados para um mês específico
+    def tem_dados_mes(mes, ano):
+        """Verifica se há dados salvos para um mês específico"""
+        dados = carregar_dados()
+        
+        # Verificar faturas
+        tem_faturas = any(
+            f['mes'] == mes and f['ano'] == ano 
+            for f in dados.get('faturas', [])
+        )
+        
+        # Verificar entradas
+        tem_entradas = any(
+            e['mes'] == mes and e['ano'] == ano 
+            for e in dados.get('entradas', [])
+        )
+        
+        # Verificar gastos fixos (não são específicos por mês, mas mostrar se existem)
+        tem_gastos_fixos = len(dados.get('gastos_fixos', [])) > 0
+        
+        return tem_faturas or tem_entradas or tem_gastos_fixos
+    
+    # Seleção do mês com indicadores visuais
+    mes_options_base = {
         'Janeiro': 1, 'Fevereiro': 2, 'Março': 3, 'Abril': 4,
         'Maio': 5, 'Junho': 6, 'Julho': 7, 'Agosto': 8,
         'Setembro': 9, 'Outubro': 10, 'Novembro': 11, 'Dezembro': 12
     }
+    
+    # Criar opções com indicadores visuais
+    ano_atual = datetime.now().year
+    ano_selecionado_temp = st.session_state.get('ano_selecionado', ano_atual)
+    
+    mes_options = {}
+    for nome_mes, num_mes in mes_options_base.items():
+        if tem_dados_mes(num_mes, ano_selecionado_temp):
+            mes_options[f"✅ {nome_mes}"] = num_mes
+        else:
+            mes_options[f"⚪ {nome_mes}"] = num_mes
 
     # Funções de processamento
     @st.cache_data(ttl=600)
@@ -844,24 +930,48 @@ elif authentication_status:
         # Gerar um hash curto (8 caracteres) para garantir unicidade
         return hashlib.md5(chave_base.encode()).hexdigest()[:8]
 
-    # Criar tabs
+    # Criar seleção de mês e ano
     col1, col2 = st.columns([2, 1])
-    with col1:
-        mes_selecionado = st.selectbox(
-            "Selecione o Mês",
-            options=list(mes_options.keys()),
-            index=datetime.now().month - 1
-        )
-        # Definir mes_num logo após a seleção
-        mes_num = mes_options[mes_selecionado]
-
+    
     with col2:
         ano_atual = datetime.now().year
         ano_selecionado = st.selectbox(
             "Ano",
             options=range(ano_atual-2, ano_atual+1),
-            index=2
+            index=2,
+            key="ano_selecionado"
         )
+        # Salvar ano selecionado no session state
+        st.session_state['ano_selecionado'] = ano_selecionado
+    
+    # Recriar opções do mês com base no ano selecionado
+    mes_options = {}
+    for nome_mes, num_mes in mes_options_base.items():
+        if tem_dados_mes(num_mes, ano_selecionado):
+            mes_options[f"✅ {nome_mes}"] = num_mes
+        else:
+            mes_options[f"⚪ {nome_mes}"] = num_mes
+
+    with col1:
+        # Determinar índice padrão baseado no mês atual
+        mes_atual = datetime.now().month
+        nome_mes_atual = list(mes_options_base.keys())[mes_atual - 1]
+        
+        # Procurar o índice do mês atual (com ou sem check)
+        opcoes_mes = list(mes_options.keys())
+        indice_padrao = 0
+        for i, opcao in enumerate(opcoes_mes):
+            if nome_mes_atual in opcao:
+                indice_padrao = i
+                break
+        
+        mes_selecionado = st.selectbox(
+            "Selecione o Mês",
+            options=opcoes_mes,
+            index=indice_padrao
+        )
+        # Definir mes_num logo após a seleção
+        mes_num = mes_options[mes_selecionado]
 
     # Criar tabs
     tab_inserir, tab_entradas, tab_analise, tab_parcelas, tab_fixos, tab_historico = st.tabs([
@@ -899,16 +1009,69 @@ elif authentication_status:
                                 'transacoes': df.to_dict('records')
                             }
                             adicionar_fatura(fatura)
-                            st.success(f"Fatura de {mes_selecionado}/{ano_selecionado} salva com sucesso!")
+                            # Limpar nome do mês de checks visuais para exibição
+                            nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                            st.success(f"Fatura de {nome_mes_limpo}/{ano_selecionado} salva com sucesso!")
+                            st.rerun()  # Atualizar indicadores visuais
                         except Exception as e:
                             st.error(f"Erro ao salvar fatura: {str(e)}")
                 else:
                     st.warning("Por favor, faça upload de uma fatura primeiro.")
         
         with col2:
-            if st.button("🗑️ Limpar Dados do Mês", use_container_width=True):
-                limpar_fatura(mes_num, ano_selecionado)
-                st.success(f"Dados de {mes_selecionado}/{ano_selecionado} removidos!")
+            # Contar dados existentes para o mês selecionado
+            dados_existentes = carregar_dados()
+            
+            # Contar itens do mês atual
+            transacoes_mes = 0
+            for fatura in dados_existentes.get('faturas', []):
+                if fatura['mes'] == mes_num and fatura['ano'] == ano_selecionado:
+                    transacoes_mes += len(fatura.get('transacoes', []))
+            
+            entradas_mes = len([
+                e for e in dados_existentes.get('entradas', [])
+                if e.get('mes') == mes_num and e.get('ano') == ano_selecionado
+            ])
+            
+            gastos_fixos_total = len(dados_existentes.get('gastos_fixos', []))
+            
+            # Inicializar estado do botão de confirmação
+            if f'confirm_clear_{mes_num}_{ano_selecionado}' not in st.session_state:
+                st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = False
+            
+            if not st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}']:
+                # Mostrar botão com preview dos dados
+                total_itens = transacoes_mes + entradas_mes + gastos_fixos_total
+                if total_itens > 0:
+                    if st.button(f"🗑️ Limpar TODOS os Dados do Mês ({total_itens} itens)", use_container_width=True, type="secondary"):
+                        st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = True
+                        st.rerun()
+                else:
+                    st.button("🗑️ Limpar TODOS os Dados do Mês (vazio)", use_container_width=True, disabled=True)
+            else:
+                st.error("⚠️ **CONFIRMAÇÃO NECESSÁRIA**")
+                # Limpar nome do mês de checks visuais para exibição
+                nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                st.warning(f"Isso vai apagar TODOS os dados de {nome_mes_limpo}/{ano_selecionado}:")
+                if transacoes_mes > 0:
+                    st.write(f"• {transacoes_mes} transações da fatura")
+                if entradas_mes > 0:
+                    st.write(f"• {entradas_mes} entradas registradas")
+                if gastos_fixos_total > 0:
+                    st.write(f"• {gastos_fixos_total} gastos fixos")
+                if transacoes_mes == 0 and entradas_mes == 0 and gastos_fixos_total == 0:
+                    st.write("• Nenhum dado encontrado para remover")
+                st.write("")
+                
+                col2a, col2b = st.columns(2)
+                with col2a:
+                    if st.button("✅ SIM, Apagar Tudo", use_container_width=True, type="primary"):
+                        limpar_fatura(mes_num, ano_selecionado)
+                        st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = False
+                with col2b:
+                    if st.button("❌ Cancelar", use_container_width=True):
+                        st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = False
+                        st.rerun()
 
     # Na aba de Entradas do Mês
     with tab_entradas:
@@ -936,6 +1099,7 @@ elif authentication_status:
                     if valor_entrada > 0 and descricao_entrada:
                         adicionar_entrada(mes_num, ano_selecionado, valor_entrada, descricao_entrada, tipo_entrada)
                         st.success("✓ Entrada adicionada com sucesso!")
+                        st.rerun()  # Atualizar indicadores visuais
                     else:
                         st.error("Por favor, preencha todos os campos.")
 
@@ -1554,6 +1718,7 @@ elif authentication_status:
                         dados['gastos_fixos'].append(novo_gasto)
                         salvar_dados(dados)
                         st.success("✓ Gasto fixo adicionado com sucesso!")
+                        st.rerun()  # Atualizar indicadores visuais
                     else:
                         st.error("Por favor, preencha todos os campos.")
         
@@ -1599,7 +1764,9 @@ elif authentication_status:
         # Criar DataFrame com histórico
         historico = []
         for fatura in faturas:
-            mes_ano = f"{list(mes_options.keys())[int(fatura['mes'])-1]}/{fatura['ano']}"
+            # Usar nomes de mês limpos (sem checks) para o histórico
+            mes_nome = list(mes_options_base.keys())[int(fatura['mes'])-1]
+            mes_ano = f"{mes_nome}/{fatura['ano']}"
             total = sum(t['valor'] for t in fatura['transacoes'])
             historico.append({
                 'Mês': mes_ano,

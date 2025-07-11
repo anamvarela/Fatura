@@ -229,8 +229,8 @@ def formatar_variacao(variacao):
     return "="
 
 def limpar_historico():
-    """Limpa todo o histórico de faturas"""
-    salvar_dados({'faturas': [], 'gastos_fixos': []})
+    """Limpa todo o histórico de faturas, entradas, gastos fixos e parcelas"""
+    salvar_dados({'faturas': [], 'gastos_fixos': [], 'entradas': [], 'parcelas': []})
 
 def limpar_fatura(mes):
     """Remove uma fatura específica do histórico"""
