@@ -305,6 +305,10 @@ def classificar_transacao(descricao):
     if descricao.startswith('zig'):
         return 'Entretenimento'
     
+    # Restaurantes específicos que podem ter classificação salva incorreta
+    if 'amen gavea' in descricao or 'amen' in descricao:
+        return 'Alimentação'
+    
     # Verificar se já existe uma classificação automática salva
     classificacoes_salvas = carregar_classificacoes_salvas()
     if descricao in classificacoes_salvas:
@@ -346,7 +350,7 @@ def classificar_transacao(descricao):
             'sheesh', 'downtown', 'rainha', 'leblon', 'natural delli',
             'absurda', 'confeitaria', 'bacio di latte', 'yogoberry',
             'galeto leblon', 'galeto rainha', 'pavilhao', 'sardinha',
-            'la guapa', 'lena park', 'pasta basta', 'stuzzi',
+            'la guapa', 'guapa', 'lena park', 'pasta basta', 'stuzzi',
             # Palavras-chave gerais
             'food', 'caza', 'lagoa', 'buffet', 'lanches', 'refeicao', 'refeição',
             'comida', 'bebida', 'alimentacao', 'alimentação'
@@ -365,7 +369,7 @@ def classificar_transacao(descricao):
             'cartão riocard', 'metrocard', 'ricard',
             # Estacionamento
             'estacionamento', 'parking', 'zona azul', 'parquimetro',
-            'estapar', 'multipark', 'autopark', 'valet',
+            'estapar', 'multipark', 'autopark', 'valet', 'jpd park', 'park',
             # Outros transportes
             'aviacao', 'aviação', 'gol', 'tam', 'azul', 'latam',
             'rodoviaria', 'rodoviária', 'viacao', 'viação'
@@ -375,6 +379,9 @@ def classificar_transacao(descricao):
             'netflix', 'spotify', 'amazon prime', 'disney+', 'disney plus',
             'hbo max', 'youtube premium', 'deezer', 'apple music', 'tidal',
             'paramount+', 'globoplay', 'crunchyroll', 'twitch', 'prime video',
+            # Tecnologia e assinaturas
+            'openai', 'chatgpt', 'apple.com', 'apple com', 'microsoft', 'adobe',
+            'google', 'icloud', 'dropbox', 'zoom', 'canva', 'figma', 'notion',
             # Jogos
             'steam', 'playstation', 'psn', 'xbox', 'nintendo',
             'epic games', 'battle.net', 'origin', 'uplay', 'gog',
