@@ -309,6 +309,10 @@ def classificar_transacao(descricao):
     if 'amen gavea' in descricao or 'amen' in descricao:
         return 'Alimentação'
     
+    # Sephora - Regra especial para self care
+    if 'sephora' in descricao:
+        return 'Self Care'
+    
     # Verificar se já existe uma classificação automática salva
     classificacoes_salvas = carregar_classificacoes_salvas()
     if descricao in classificacoes_salvas:
@@ -356,7 +360,9 @@ def classificar_transacao(descricao):
             'garota do leblon', 'megamatterg', 'cla',
             # Palavras-chave gerais
             'food', 'caza', 'lagoa', 'buffet', 'lanches', 'refeicao', 'refeição',
-            'comida', 'bebida', 'alimentacao', 'alimentação'
+            'comida', 'bebida', 'alimentacao', 'alimentação',
+            # Estabelecimentos que estavam sendo classificados incorretamente
+            'cabana', 'casa do pao de queijo', 'mercato mix', 'milho'
         ],
         'Transporte': [
             # Apps de transporte (99app já tratado separadamente)
@@ -450,7 +456,10 @@ def classificar_transacao(descricao):
             'loja', 'shopping', 'moda', 'vestuario', 'vestuário', 'boutique',
             'fashion', 'wear', 'brand', 'store', 'outlet', 'multimarcas',
             'roupas', 'calcados', 'calçados', 'sapatos', 'tenis', 'tênis',
-            'bolsas', 'carteiras', 'cintos', 'bijuterias', 'semijoias'
+            'bolsas', 'carteiras', 'cintos', 'bijuterias', 'semijoias',
+            # Estabelecimentos que estavam sendo classificados incorretamente
+            'vmpp comercio', 'confeccao', 'confecção', 'confec', 'vuvu',
+            'ec *', 'produtos', 'e-commerce', 'ecommerce'
         ],
         'Outros': [
             # Serviços profissionais
