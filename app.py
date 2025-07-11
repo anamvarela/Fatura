@@ -609,11 +609,18 @@ def limpar_fatura(mes, ano):
 
 def reaplicar_regras_todas_transacoes():
     """
-    Reaplica todas as regras de classificação às transações existentes
+    Reaplica todas as regras de classificação às transações existentes.
+    
+    IMPORTANTE: Preserva classificações manuais feitas com o lápis.
+    Só atualiza transações que não foram classificadas manualmente.
     """
     dados = carregar_dados()
     transacoes_atualizadas = 0
+    transacoes_preservadas = 0
     entradas = dados.get('entradas', [])
+    
+    # Carregar classificações salvas (indicam classificação manual)
+    classificacoes_salvas = carregar_classificacoes_salvas()
     
     # Aplicar regras às faturas
     for fatura in dados.get('faturas', []):
@@ -635,7 +642,16 @@ def reaplicar_regras_todas_transacoes():
                 transacoes_para_remover.append(i)
                 transacoes_atualizadas += 1
             else:
-                # Verificar se a categoria mudou
+                # Verificar se foi classificada manualmente (salva no arquivo)
+                descricao_busca = transacao['descricao'].lower().strip()
+                foi_classificada_manualmente = descricao_busca in classificacoes_salvas
+                
+                if foi_classificada_manualmente:
+                    # Preservar classificação manual - não sobrescrever
+                    transacoes_preservadas += 1
+                    continue
+                
+                # Só aplicar nova classificação se não foi feita manualmente
                 categoria_original = transacao.get('categoria', '')
                 categoria_nova = classificar_transacao(transacao['descricao'])
                 
@@ -652,7 +668,12 @@ def reaplicar_regras_todas_transacoes():
     
     # Salvar os dados atualizados
     salvar_dados(dados)
-    return transacoes_atualizadas
+    
+    # Retornar informações sobre o que foi feito
+    return {
+        'atualizadas': transacoes_atualizadas,
+        'preservadas': transacoes_preservadas
+    }
 
 
 
@@ -1299,8 +1320,21 @@ elif authentication_status:
                 # Botão para reaplicar regras
                 if st.button("🔄 Reaplicar Regras a Todas as Transações", use_container_width=True):
                     with st.spinner("Reaplicando regras..."):
-                        transacoes_atualizadas = reaplicar_regras_todas_transacoes()
-                        st.success(f"✅ {transacoes_atualizadas} transações foram atualizadas!")
+                        resultado = reaplicar_regras_todas_transacoes()
+                        
+                        # Mostrar resultado detalhado
+                        if resultado['atualizadas'] > 0 or resultado['preservadas'] > 0:
+                            st.success(f"✅ Reaplicação concluída!")
+                            if resultado['atualizadas'] > 0:
+                                st.success(f"📝 {resultado['atualizadas']} transações foram atualizadas com novas regras")
+                            if resultado['preservadas'] > 0:
+                                st.info(f"🔒 {resultado['preservadas']} transações preservadas (classificação manual)")
+                        else:
+                            st.info("ℹ️ Nenhuma transação foi modificada - todas já estão classificadas corretamente!")
+                        
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
                         st.rerun()
         
         # Carregar dados
