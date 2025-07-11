@@ -26,7 +26,7 @@
                     "Data": "02 MAI",
                     "Descrição": "7017 Barra Shopping - Parcela 2/2",
                     "Valor": 399.25,
-                    "Categoria": "Roupas"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "02 MAI",
@@ -104,7 +104,7 @@
                     "Data": "04 MAI",
                     "Descrição": "Josefrancelinoda",
                     "Valor": 10.0,
-                    "Categoria": "Transporte"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "04 MAI",
@@ -134,7 +134,7 @@
                     "Data": "05 MAI",
                     "Descrição": "Zig*Caza Lagoa",
                     "Valor": 42.9,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Entretenimento"
                 },
                 {
                     "Data": "07 MAI",
@@ -194,7 +194,7 @@
                     "Data": "09 MAI",
                     "Descrição": "Sephora Barra",
                     "Valor": 472.5,
-                    "Categoria": "Roupas"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "09 MAI",
@@ -242,7 +242,7 @@
                     "Data": "11 MAI",
                     "Descrição": "Milho",
                     "Valor": 12.0,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Outros"
                 },
                 {
                     "Data": "11 MAI",
@@ -338,7 +338,7 @@
                     "Data": "16 MAI",
                     "Descrição": "Vmpp Comercio e Confec",
                     "Valor": 229.9,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Outros"
                 },
                 {
                     "Data": "16 MAI",
@@ -386,19 +386,19 @@
                     "Data": "17 MAI",
                     "Descrição": "Casa do Pao de Queijo",
                     "Valor": 26.5,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Outros"
                 },
                 {
                     "Data": "18 MAI",
                     "Descrição": "Lena Park",
                     "Valor": 30.0,
-                    "Categoria": "Transporte"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "18 MAI",
                     "Descrição": "Vuvu",
                     "Valor": 51.52,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Outros"
                 },
                 {
                     "Data": "18 MAI",
@@ -440,7 +440,7 @@
                     "Data": "21 MAI",
                     "Descrição": "Ec *2produtos",
                     "Valor": 87.08,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Outros"
                 },
                 {
                     "Data": "21 MAI",
@@ -494,7 +494,7 @@
                     "Data": "23 MAI",
                     "Descrição": "Bendita Chica",
                     "Valor": 170.91,
-                    "Categoria": "Roupas"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "23 MAI",
@@ -650,7 +650,7 @@
                     "Data": "29 MAI",
                     "Descrição": "Openai *Chatgpt Subscr",
                     "Valor": 118.43,
-                    "Categoria": "Outros"
+                    "Categoria": "Entretenimento"
                 },
                 {
                     "Data": "31 MAI",
@@ -692,7 +692,7 @@
                     "Data": "31 MAI",
                     "Descrição": "Cabana",
                     "Valor": 69.93,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Outros"
                 },
                 {
                     "Data": "31 MAI",
@@ -716,7 +716,7 @@
                     "Data": "01 JUN",
                     "Descrição": "Apple.Com/Bill",
                     "Valor": 49.9,
-                    "Categoria": "Outros"
+                    "Categoria": "Entretenimento"
                 }
             ],
             "parcelas_futuras": [
@@ -861,7 +861,7 @@
                     "Data": "06 JUN",
                     "Descrição": "Havaianas Leblon",
                     "Valor": 8.0,
-                    "Categoria": "Roupas"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "06 JUN",
@@ -939,7 +939,7 @@
                     "Data": "08 JUN",
                     "Descrição": "Drogarias Carioca",
                     "Valor": 11.99,
-                    "Categoria": "Self Care"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "08 JUN",
@@ -1035,7 +1035,7 @@
                     "Data": "11 JUN",
                     "Descrição": "Mercato Mix Ii",
                     "Valor": 26.9,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Outros"
                 },
                 {
                     "Data": "11 JUN",
@@ -1053,7 +1053,7 @@
                     "Data": "12 JUN",
                     "Descrição": "Jpd Park",
                     "Valor": 32.0,
-                    "Categoria": "Outros"
+                    "Categoria": "Transporte"
                 },
                 {
                     "Data": "12 JUN",
@@ -1065,7 +1065,7 @@
                     "Data": "12 JUN",
                     "Descrição": "la Guapa - Botafogo",
                     "Valor": 33.18,
-                    "Categoria": "Outros"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "12 JUN",
@@ -1209,7 +1209,7 @@
                     "Data": "20 JUN",
                     "Descrição": "Amen Gavea",
                     "Valor": 31.0,
-                    "Categoria": "Outros"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "20 JUN",
@@ -1299,7 +1299,7 @@
                     "Data": "26 JUN",
                     "Descrição": "Sephora Leblon - Parcela 1/2",
                     "Valor": 298.0,
-                    "Categoria": "Roupas"
+                    "Categoria": "Alimentação"
                 },
                 {
                     "Data": "26 JUN",
@@ -1329,7 +1329,7 @@
                     "Data": "26 JUN",
                     "Descrição": "Sk Acessorios",
                     "Valor": 189.0,
-                    "Categoria": "Roupas"
+                    "Categoria": "Transporte"
                 },
                 {
                     "Data": "26 JUN",
@@ -1395,13 +1395,13 @@
                     "Data": "29 JUN",
                     "Descrição": "Ingresso.Com",
                     "Valor": 161.91,
-                    "Categoria": "Entretenimento"
+                    "Categoria": "Transporte"
                 },
                 {
                     "Data": "29 JUN",
                     "Descrição": "Openai *Chatgpt Subscr",
                     "Valor": 113.9,
-                    "Categoria": "Outros"
+                    "Categoria": "Entretenimento"
                 },
                 {
                     "Data": "29 JUN",
@@ -1443,7 +1443,7 @@
                     "Data": "01 JUL",
                     "Descrição": "Apple.Com/Bill",
                     "Valor": 66.9,
-                    "Categoria": "Outros"
+                    "Categoria": "Entretenimento"
                 },
                 {
                     "Data": "01 JUL",
