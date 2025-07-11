@@ -950,8 +950,19 @@ elif authentication_status:
     with col1:
         opcoes_mes = list(mes_options.keys())
         
+        # Verificar se há uma solicitação para manter um mês específico (após upload)
+        if 'mes_manter_selecao' in st.session_state:
+            mes_para_manter = st.session_state['mes_manter_selecao']
+            # Procurar o mês nas opções (pode estar com ✅ ou ⚪)
+            for opcao in opcoes_mes:
+                if mes_para_manter in opcao:
+                    st.session_state.mes_selecionado = opcao
+                    break
+            # Limpar a flag
+            del st.session_state['mes_manter_selecao']
+        
         # Inicializar com mês atual apenas se não existir no session_state
-        if 'mes_selecionado' not in st.session_state:
+        elif 'mes_selecionado' not in st.session_state:
             mes_atual = datetime.now().month
             nome_mes_atual = list(mes_options_base.keys())[mes_atual - 1]
             
@@ -965,7 +976,7 @@ elif authentication_status:
                 st.session_state.mes_selecionado = opcoes_mes[0]
         
         # Verificar se a seleção atual ainda existe nas opções (após mudança de ano)
-        if st.session_state.mes_selecionado not in opcoes_mes:
+        elif st.session_state.mes_selecionado not in opcoes_mes:
             # Se a seleção atual não existe mais, encontrar equivalente sem/com check
             mes_limpo = st.session_state.mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
             for opcao in opcoes_mes:
@@ -1023,6 +1034,9 @@ elif authentication_status:
                             # Limpar nome do mês de checks visuais para exibição
                             nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
                             st.success(f"Fatura de {nome_mes_limpo}/{ano_selecionado} salva com sucesso!")
+                            
+                            # Manter a seleção do mês atual (nome limpo) para o próximo rerun
+                            st.session_state['mes_manter_selecao'] = nome_mes_limpo
                             st.rerun()  # Atualizar indicadores visuais
                         except Exception as e:
                             st.error(f"Erro ao salvar fatura: {str(e)}")
@@ -1120,6 +1134,9 @@ elif authentication_status:
                     if valor_entrada > 0 and descricao_entrada:
                         adicionar_entrada(mes_num, ano_selecionado, valor_entrada, descricao_entrada, tipo_entrada)
                         st.success("✓ Entrada adicionada com sucesso!")
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
                         st.rerun()  # Atualizar indicadores visuais
                     else:
                         st.error("Por favor, preencha todos os campos.")
@@ -1158,6 +1175,9 @@ elif authentication_status:
                             entrada['descricao'],
                             entrada.get('tipo', 'Outros')
                         )
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
                         st.rerun()
                         
                 # Linha fina entre itens
@@ -1739,6 +1759,9 @@ elif authentication_status:
                         dados['gastos_fixos'].append(novo_gasto)
                         salvar_dados(dados)
                         st.success("✓ Gasto fixo adicionado com sucesso!")
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
                         st.rerun()  # Atualizar indicadores visuais
                     else:
                         st.error("Por favor, preencha todos os campos.")
@@ -1762,6 +1785,9 @@ elif authentication_status:
                     if st.button("🗑️", key=f"del_fixo_{idx}", help="Deletar gasto fixo"):
                         dados['gastos_fixos'].remove(gasto)
                         salvar_dados(dados)
+                        # Manter a seleção do mês atual
+                        nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                        st.session_state['mes_manter_selecao'] = nome_mes_limpo
                         st.rerun()
                         
                 # Linha fina entre itens
