@@ -948,23 +948,38 @@ elif authentication_status:
             mes_options[f"⚪ {nome_mes}"] = num_mes
 
     with col1:
-        # Determinar índice padrão baseado no mês atual
-        mes_atual = datetime.now().month
-        nome_mes_atual = list(mes_options_base.keys())[mes_atual - 1]
-        
-        # Procurar o índice do mês atual (com ou sem check)
         opcoes_mes = list(mes_options.keys())
-        indice_padrao = 0
-        for i, opcao in enumerate(opcoes_mes):
-            if nome_mes_atual in opcao:
-                indice_padrao = i
-                break
+        
+        # Inicializar com mês atual apenas se não existir no session_state
+        if 'mes_selecionado' not in st.session_state:
+            mes_atual = datetime.now().month
+            nome_mes_atual = list(mes_options_base.keys())[mes_atual - 1]
+            
+            # Procurar a opção do mês atual (com ou sem check)
+            for opcao in opcoes_mes:
+                if nome_mes_atual in opcao:
+                    st.session_state.mes_selecionado = opcao
+                    break
+            else:
+                # Se não encontrar, usar o primeiro da lista
+                st.session_state.mes_selecionado = opcoes_mes[0]
+        
+        # Verificar se a seleção atual ainda existe nas opções (após mudança de ano)
+        if st.session_state.mes_selecionado not in opcoes_mes:
+            # Se a seleção atual não existe mais, encontrar equivalente sem/com check
+            mes_limpo = st.session_state.mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+            for opcao in opcoes_mes:
+                if mes_limpo in opcao:
+                    st.session_state.mes_selecionado = opcao
+                    break
+            else:
+                st.session_state.mes_selecionado = opcoes_mes[0]
         
         mes_selecionado = st.selectbox(
             "Selecione o Mês",
             options=opcoes_mes,
-            index=indice_padrao,
-            help="✅ indica meses com faturas salvas"
+            help="✅ indica meses com faturas salvas",
+            key="mes_selecionado"
         )
         # Definir mes_num logo após a seleção
         mes_num = mes_options[mes_selecionado]
