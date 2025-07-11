@@ -538,6 +538,8 @@ def limpar_fatura(mes, ano):
     """
     Remove todos os dados da fatura do mês e ano selecionados.
     Inclui: transações, entradas e gastos fixos específicos do mês.
+    IMPORTANTE: O indicador visual (check verde) aparece apenas quando há FATURAS,
+    mas este botão remove todos os tipos de dados.
     """
     dados = carregar_dados()
     
@@ -725,27 +727,30 @@ elif authentication_status:
         </style>
     """, unsafe_allow_html=True)
 
-    # Função para verificar se há dados para um mês específico
-    def tem_dados_mes(mes, ano):
-        """Verifica se há dados salvos para um mês específico"""
+    # Função para verificar se há faturas para um mês específico
+    def tem_fatura_mes(mes, ano):
+        """
+        Verifica se há fatura salva para um mês específico.
+        
+        IMPORTANTE: Esta função determina se o check verde (✅) aparece no seletor de mês.
+        Verifica APENAS faturas, não entradas nem gastos fixos.
+        
+        Args:
+            mes (int): Número do mês (1-12)
+            ano (int): Ano (ex: 2024)
+            
+        Returns:
+            bool: True se há fatura salva para o mês/ano, False caso contrário
+        """
         dados = carregar_dados()
         
-        # Verificar faturas
+        # Verificar apenas faturas (não entradas nem gastos fixos)
         tem_faturas = any(
             f['mes'] == mes and f['ano'] == ano 
             for f in dados.get('faturas', [])
         )
         
-        # Verificar entradas
-        tem_entradas = any(
-            e['mes'] == mes and e['ano'] == ano 
-            for e in dados.get('entradas', [])
-        )
-        
-        # Verificar gastos fixos (não são específicos por mês, mas mostrar se existem)
-        tem_gastos_fixos = len(dados.get('gastos_fixos', [])) > 0
-        
-        return tem_faturas or tem_entradas or tem_gastos_fixos
+        return tem_faturas
     
     # Seleção do mês com indicadores visuais
     mes_options_base = {
@@ -937,7 +942,7 @@ elif authentication_status:
     # Recriar opções do mês com base no ano selecionado
     mes_options = {}
     for nome_mes, num_mes in mes_options_base.items():
-        if tem_dados_mes(num_mes, ano_selecionado):
+        if tem_fatura_mes(num_mes, ano_selecionado):
             mes_options[f"✅ {nome_mes}"] = num_mes
         else:
             mes_options[f"⚪ {nome_mes}"] = num_mes
@@ -958,7 +963,8 @@ elif authentication_status:
         mes_selecionado = st.selectbox(
             "Selecione o Mês",
             options=opcoes_mes,
-            index=indice_padrao
+            index=indice_padrao,
+            help="✅ indica meses com faturas salvas"
         )
         # Definir mes_num logo após a seleção
         mes_num = mes_options[mes_selecionado]
@@ -1025,6 +1031,9 @@ elif authentication_status:
             
             gastos_fixos_total = len(dados_existentes.get('gastos_fixos', []))
             
+            # Verificar se há fatura (para mostrar estado correto do botão)
+            tem_fatura = tem_fatura_mes(mes_num, ano_selecionado)
+            
             # Inicializar estado do botão de confirmação
             if f'confirm_clear_{mes_num}_{ano_selecionado}' not in st.session_state:
                 st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = False
@@ -1032,8 +1041,15 @@ elif authentication_status:
             if not st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}']:
                 # Mostrar botão com preview dos dados
                 total_itens = transacoes_mes + entradas_mes + gastos_fixos_total
+                
                 if total_itens > 0:
-                    if st.button(f"🗑️ Limpar TODOS os Dados do Mês ({total_itens} itens)", use_container_width=True, type="secondary"):
+                    # Diferentes textos baseados no que tem
+                    if tem_fatura:
+                        botao_texto = f"🗑️ Limpar TODOS os Dados do Mês ({total_itens} itens)"
+                    else:
+                        botao_texto = f"🗑️ Limpar Dados do Mês ({total_itens} itens - sem fatura)"
+                    
+                    if st.button(botao_texto, use_container_width=True, type="secondary"):
                         st.session_state[f'confirm_clear_{mes_num}_{ano_selecionado}'] = True
                         st.rerun()
                 else:
