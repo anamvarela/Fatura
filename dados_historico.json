@@ -26,7 +26,7 @@
                     "Data": "02 MAI",
                     "Descrição": "7017 Barra Shopping - Parcela 2/2",
                     "Valor": 399.25,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Roupas"
                 },
                 {
                     "Data": "02 MAI",
@@ -194,7 +194,7 @@
                     "Data": "09 MAI",
                     "Descrição": "Sephora Barra",
                     "Valor": 472.5,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Roupas"
                 },
                 {
                     "Data": "09 MAI",
@@ -861,7 +861,7 @@
                     "Data": "06 JUN",
                     "Descrição": "Havaianas Leblon",
                     "Valor": 8.0,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Roupas"
                 },
                 {
                     "Data": "06 JUN",
@@ -939,7 +939,7 @@
                     "Data": "08 JUN",
                     "Descrição": "Drogarias Carioca",
                     "Valor": 11.99,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Self Care"
                 },
                 {
                     "Data": "08 JUN",
@@ -1299,7 +1299,7 @@
                     "Data": "26 JUN",
                     "Descrição": "Sephora Leblon - Parcela 1/2",
                     "Valor": 298.0,
-                    "Categoria": "Alimentação"
+                    "Categoria": "Roupas"
                 },
                 {
                     "Data": "26 JUN",
@@ -1329,7 +1329,7 @@
                     "Data": "26 JUN",
                     "Descrição": "Sk Acessorios",
                     "Valor": 189.0,
-                    "Categoria": "Transporte"
+                    "Categoria": "Roupas"
                 },
                 {
                     "Data": "26 JUN",
@@ -1395,7 +1395,7 @@
                     "Data": "29 JUN",
                     "Descrição": "Ingresso.Com",
                     "Valor": 161.91,
-                    "Categoria": "Transporte"
+                    "Categoria": "Entretenimento"
                 },
                 {
                     "Data": "29 JUN",
