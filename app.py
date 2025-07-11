@@ -351,6 +351,9 @@ def classificar_transacao(descricao):
             'absurda', 'confeitaria', 'bacio di latte', 'yogoberry',
             'galeto leblon', 'galeto rainha', 'pavilhao', 'sardinha',
             'la guapa', 'guapa', 'lena park', 'pasta basta', 'stuzzi',
+            # Nomes de pessoas (provavelmente vendedores de comida)
+            'davianastaciode', 'eduardojorgecosta', 'jose', 'josefrancelinoda',
+            'garota do leblon', 'megamatterg', 'cla',
             # Palavras-chave gerais
             'food', 'caza', 'lagoa', 'buffet', 'lanches', 'refeicao', 'refeição',
             'comida', 'bebida', 'alimentacao', 'alimentação'
@@ -396,6 +399,7 @@ def classificar_transacao(descricao):
             # Farmácias e saúde
             'farmacia', 'farmácia', 'drogaria', 'droga', 'pacheco', 'raia', 
             'drogasil', 'remedios', 'remédios', 'medicamentos', 'medicina',
+            'drogarias', 'venancio', 'cristal', 'carioca', 'raiadrogasilsa',
             # Consultas e exames
             'consulta', 'medico', 'médico', 'dentista', 'psicólogo', 'psicologo',
             'terapeuta', 'fisioterapeuta', 'nutricionista', 'exame',
@@ -405,11 +409,12 @@ def classificar_transacao(descricao):
             'salao', 'salão', 'cabelereiro', 'cabeleireiro', 'manicure',
             'pedicure', 'spa', 'massagem', 'estetica', 'estética',
             'barbearia', 'barber', 'depilacao', 'depilação', 'beauty',
-            'nail', 'designer', 'sobrancelha',
+            'nail', 'designer', 'sobrancelha', 'jaques janine', 'espacolaser',
             # Academia e fitness
             'academia', 'gym', 'crossfit', 'pilates', 'yoga', 'personal',
             'trainer', 'box', 'fitness', 'smart fit', 'bodytech', 'selfit',
-            'bio ritmo', 'competition', 'runner'
+            'bio ritmo', 'competition', 'runner', 'wellhub', 'gympass',
+            'sua academia'
         ],
         'Roupas': [
             # Lojas de departamento
@@ -446,6 +451,18 @@ def classificar_transacao(descricao):
             'fashion', 'wear', 'brand', 'store', 'outlet', 'multimarcas',
             'roupas', 'calcados', 'calçados', 'sapatos', 'tenis', 'tênis',
             'bolsas', 'carteiras', 'cintos', 'bijuterias', 'semijoias'
+        ],
+        'Outros': [
+            # Serviços profissionais
+            'aluguel', 'condominio', 'condomínio', 'iptu', 'conta de luz',
+            'conta de agua', 'conta de água', 'conta de gas', 'conta de gás',
+            'telefone', 'internet', 'tv', 'cable', 'seguro', 'banco',
+            'taxa', 'tarifa', 'juros', 'multa', 'advocacia', 'advogado',
+            'contabilidade', 'contador', 'consultoria', 'servicos', 'serviços',
+            # Tecnologia específica
+            'we make agency', 'agency', 'agencia', 'agência',
+            # Palavras genéricas que não se encaixam em outras categorias
+            'diversos', 'outros', 'geral', 'variados', 'miscelanea', 'miscelânea'
         ]
     }
 
@@ -454,7 +471,7 @@ def classificar_transacao(descricao):
         if any(palavra in descricao for palavra in palavras_chave):
             return categoria
 
-    return "Roupas"
+    return "Outros"
 
 def adicionar_fatura(fatura):
     """Adiciona uma nova fatura ao histórico"""
@@ -582,6 +599,32 @@ def corrigir_classificacoes_restaurantes():
     
     salvar_dados(dados)
     return corrigidas
+
+def reaplicar_classificacao_todas_transacoes():
+    """
+    Reaplica a classificação automática a todas as transações usando a nova lógica melhorada.
+    """
+    dados = carregar_dados()
+    faturas = dados.get('faturas', [])
+    
+    transacoes_atualizadas = 0
+    
+    for fatura in faturas:
+        for transacao in fatura.get('transacoes', []):
+            categoria_original = transacao.get('categoria', '')
+            categoria_nova = classificar_transacao(transacao['descricao'])
+            
+            # Só atualiza se a categoria mudou
+            if categoria_original != categoria_nova:
+                transacao['categoria'] = categoria_nova
+                transacoes_atualizadas += 1
+                print(f"Reclassificando '{transacao['descricao']}' de '{categoria_original}' para '{categoria_nova}'")
+                
+                # Salva a nova classificação
+                atualizar_classificacao_salva(transacao['descricao'].lower(), categoria_nova)
+    
+    salvar_dados(dados)
+    return transacoes_atualizadas
 
 
 def limpar_fatura(mes, ano):
