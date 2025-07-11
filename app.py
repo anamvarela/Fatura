@@ -956,13 +956,14 @@ elif authentication_status:
         mes_num = mes_options[mes_selecionado]
 
     # Criar tabs
-    tab_inserir, tab_entradas, tab_analise, tab_parcelas, tab_fixos, tab_historico = st.tabs([
+    tab_inserir, tab_entradas, tab_analise, tab_parcelas, tab_fixos, tab_historico, tab_teste = st.tabs([
         "📥 Inserir Fatura",
         "💰 Entradas do Mês",
         "📊 Análise",
         "🔄 Parcelas Futuras",
         "📌 Gastos Fixos",
-        "📈 Histórico"
+        "📈 Histórico",
+        "🧪 Teste Classificação"
     ])
 
     # Aba de Inserir Fatura
@@ -1897,6 +1898,76 @@ elif authentication_status:
                 "Total": st.column_config.TextColumn("Total", width="small")
             }
         )
+
+    # Nova aba de teste de classificação
+    with tab_teste:
+        st.header("🧪 Teste de Classificação")
+        
+        st.write("### Teste Individual")
+        # Entrada de teste
+        teste_descricao = st.text_input("Digite uma descrição para testar a classificação:", placeholder="Ex: 99app, ifood, carrefour...")
+        
+        if teste_descricao:
+            resultado = classificar_transacao(teste_descricao)
+            st.success(f"**{teste_descricao}** → **{resultado}**")
+        
+        st.write("### Teste em Lote")
+        # Área de texto para múltiplas descrições
+        descricoes_multiplas = st.text_area(
+            "Digite várias descrições (uma por linha):",
+            placeholder="99app\nifood\ncarrefour\nrenner\nnetflix\nfarmacia\nubereats\nmercadolivre"
+        )
+        
+        if descricoes_multiplas:
+            st.write("**Resultados:**")
+            for linha in descricoes_multiplas.split('\n'):
+                if linha.strip():
+                    resultado = classificar_transacao(linha.strip())
+                    st.write(f"• {linha.strip()} → **{resultado}**")
+        
+        st.write("### Teste com Dados Reais")
+        # Botão para testar com dados das faturas
+        if st.button("🔍 Testar Classificação das Faturas Existentes"):
+            dados = carregar_dados()
+            if dados.get('faturas'):
+                st.write("**Exemplos de classificações das suas faturas:**")
+                
+                exemplos = []
+                for fatura in dados['faturas']:
+                    for transacao in fatura['transacoes'][:5]:  # Pegar apenas 5 exemplos por fatura
+                        classificacao_atual = transacao.get('categoria', 'Sem categoria')
+                        classificacao_nova = classificar_transacao(transacao['descricao'])
+                        exemplos.append({
+                            'Descrição': transacao['descricao'],
+                            'Categoria Atual': classificacao_atual,
+                            'Categoria Nova': classificacao_nova,
+                            'Status': '✅ Igual' if classificacao_atual == classificacao_nova else '⚠️ Diferente'
+                        })
+                
+                # Mostrar apenas os primeiros 20 exemplos
+                for exemplo in exemplos[:20]:
+                    col1, col2, col3, col4 = st.columns([3, 1.5, 1.5, 1])
+                    with col1:
+                        st.write(exemplo['Descrição'])
+                    with col2:
+                        st.write(exemplo['Categoria Atual'])
+                    with col3:
+                        st.write(exemplo['Categoria Nova'])
+                    with col4:
+                        st.write(exemplo['Status'])
+                
+                if len(exemplos) > 20:
+                    st.write(f"... e mais {len(exemplos) - 20} transações")
+            else:
+                st.info("Nenhuma fatura encontrada para testar.")
+        
+        st.write("### Regras de Classificação")
+        st.write("**Verificações especiais (prioridade máxima):**")
+        st.write("• 99app → Transporte")
+        st.write("• Mercado Livre → Roupas")
+        st.write("• Zig* → Entretenimento")
+        st.write("• Suas regras personalizadas")
+        st.write("• Padrão para não encontrados → Roupas")
 
     # Estilo para tabelas mais finas e botões menores
     st.markdown("""
