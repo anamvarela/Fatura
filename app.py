@@ -115,9 +115,15 @@ def aplicar_regras_classificacao(descricao):
     regras = carregar_regras_classificacao()
     descricao_lower = descricao.lower().strip()
     
+    # Debug: Verificar se há regras carregadas
+    if not regras:
+        return None
+    
     for regra in regras:
         palavra_chave = regra['palavra_chave'].lower().strip()
+        # Verificar se a palavra-chave está presente na descrição
         if palavra_chave in descricao_lower:
+            # Debug: Regra encontrada
             return regra['categoria']
     
     return None
@@ -890,77 +896,8 @@ elif authentication_status:
             st.error(f"Erro ao processar o PDF: {str(e)}")
             return None
 
-    # Função para classificar transações
-    def classificar_transacao(descricao):
-        descricao = descricao.lower()
-        
-        # Verificar se contém "estorno" ou "desconto" - isso é tratado na função adicionar_fatura()
-        # Não classificamos aqui, apenas retornamos categoria normal
-        
-        # Verificar se é Zig* (entretenimento)
-        if descricao.startswith('zig'):
-            return 'Entretenimento'
-        
-        # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
-        if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
-            return "Transporte"
-        
-        # VERIFICAÇÕES ESPECIAIS PARA ROUPAS (antes de verificar mercado)
-        if 'mercado livre' in descricao or 'mercadolivre' in descricao:
-            return "Roupas"
-        
-        # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
-        categoria_regra = aplicar_regras_classificacao(descricao)
-        if categoria_regra:
-            return categoria_regra
-        
-        # Alimentação
-        if any(palavra in descricao for palavra in [
-            'ifood', 'rappi', 'uber eats', 'restaurante', 'padaria', 'mercado',
-            'supermercado', 'hortifruti', 'açougue', 'acougue', 'cafeteria',
-            'cafe', 'café', 'bar', 'lanchonete', 'food', 'burger',
-            # Restaurantes específicos
-            'bendita chica', 'bendita', 'chica', 'amen gavea', 'amen',
-            'art food', 'abbraccio', 'braseiro', 'gavea', 'nama',
-            'nanquim', 'posi mozza', 'posi', 'mozza', 'smoov', 'sucos',
-            'katzsu', 'eleninha', 'buddario', 'dri', 'jobi', 'scarpi',
-            'tintin', 'choperiakaraoke', 'chopp', 'alemao', 'tabacaria',
-            'woods wine', 'woods', 'wine', 'reserva 11', 'beach club',
-            'zig', 'caza', 'lagoa', 'sheesh', 'downtown', 'galeto',
-            'rainha', 'leblon', 'natural delli', 'buffet', 'absurda',
-            'confeitaria', 'zona sul'
-        ]):
-            return "Alimentação"
-        
-        # Transporte
-        if any(palavra in descricao for palavra in [
-            'uber', '99 pop', '99pop', 'taxi', 'táxi', 'combustivel', 'combustível',
-            'estacionamento', 'metro', 'metrô', 'onibus', 'ônibus', 'bilhete',
-            'posto', 'gasolina', 'etanol', 'alcool', 'álcool', 'uber*', 'uber x'
-        ]):
-            return "Transporte"
-        
-        # Entretenimento
-        if any(palavra in descricao for palavra in [
-            'netflix', 'spotify', 'cinema', 'teatro', 'show', 'ingresso',
-            'prime video', 'disney+', 'hbo', 'jogos', 'game', 'playstation',
-            'xbox', 'steam', 'livraria', 'livro', 'música', 'musica',
-            'streaming', 'assinatura'
-        ]):
-            return "Entretenimento"
-        
-        # Self Care
-        if any(palavra in descricao for palavra in [
-            'academia', 'farmacia', 'farmácia', 'drogaria', 'medico', 'médico',
-            'dentista', 'psicólogo', 'psicologo', 'terapia', 'spa', 'massagem',
-            'salao', 'salão', 'cabelereiro', 'manicure', 'pedicure', 'pilates',
-            'yoga', 'crossfit', 'gym', 'consulta', 'exame', 'clinica', 'clínica',
-            'hospital', 'remedio', 'remédio'
-        ]):
-            return "Self Care"
-        
-        # Roupas (incluindo o que antes era "Outros")
-        return "Roupas"
+    # Usar a função global classificar_transacao (já definida acima)
+    # Removida a função local duplicada que estava causando inconsistências
 
     # Função auxiliar para formatar valores
     def formatar_valor(valor):
@@ -1315,27 +1252,44 @@ elif authentication_status:
                     
                     with col3:
                         st.write("")  # Espaço para alinhamento
-                        if st.form_submit_button("Adicionar Regra"):
-                            if palavra_chave and categoria_regra:
-                                if adicionar_regra_classificacao(palavra_chave, categoria_regra):
-                                    st.success(f"✓ Regra criada: '{palavra_chave}' → {categoria_regra}")
-                                    
-                                    # Aplicar a regra imediatamente às transações existentes
-                                    with st.spinner("Aplicando regra às transações existentes..."):
-                                        resultado = reaplicar_regras_todas_transacoes()
-                                        if resultado['atualizadas'] > 0:
-                                            st.success(f"✓ Regra aplicada a {resultado['atualizadas']} transações!")
-                                    
-                                    # Manter a seleção do mês atual
-                                    nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
-                                    st.session_state['mes_manter_selecao'] = nome_mes_limpo
-                                    
-                                    time.sleep(0.5)
-                                    st.rerun()
-                                else:
-                                    st.error("Erro ao criar regra!")
-                            else:
-                                st.error("Por favor, preencha todos os campos!")
+                                                                if st.form_submit_button("Adicionar Regra"):
+                                            if palavra_chave and categoria_regra:
+                                                if adicionar_regra_classificacao(palavra_chave, categoria_regra):
+                                                    st.success(f"✓ Regra criada: '{palavra_chave}' → {categoria_regra}")
+                                                    
+                                                    # Aplicar a regra imediatamente às transações existentes
+                                                    with st.spinner("Aplicando regra às transações existentes..."):
+                                                        resultado = reaplicar_regras_todas_transacoes()
+                                                        if resultado['atualizadas'] > 0:
+                                                            st.success(f"✓ Regra aplicada a {resultado['atualizadas']} transações!")
+                                                            
+                                                            # Mostrar exemplos de transações afetadas
+                                                            dados = carregar_dados()
+                                                            exemplos = []
+                                                            for fatura in dados.get('faturas', []):
+                                                                for transacao in fatura.get('transacoes', []):
+                                                                    if palavra_chave.lower() in transacao['descricao'].lower():
+                                                                        exemplos.append(transacao['descricao'])
+                                                                        if len(exemplos) >= 3:  # Mostrar até 3 exemplos
+                                                                            break
+                                                                if len(exemplos) >= 3:
+                                                                    break
+                                                            
+                                                            if exemplos:
+                                                                st.info(f"📋 Exemplos de transações afetadas: {', '.join(exemplos[:3])}")
+                                                        else:
+                                                            st.info("ℹ️ Nenhuma transação existente foi afetada por esta regra")
+                                                    
+                                                    # Manter a seleção do mês atual
+                                                    nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                                                    st.session_state['mes_manter_selecao'] = nome_mes_limpo
+                                                    
+                                                    time.sleep(0.5)
+                                                    st.rerun()
+                                                else:
+                                                    st.error("Erro ao criar regra!")
+                                            else:
+                                                st.error("Por favor, preencha todos os campos!")
                 
                 st.markdown("---")
                 st.write("**Exemplo de uso:**")
@@ -1378,41 +1332,82 @@ elif authentication_status:
                     with st.spinner("Testando regras..."):
                         dados = carregar_dados()
                         regras = carregar_regras_classificacao()
+                        classificacoes_manuais = carregar_classificacoes_manuais()
                         
                         if not regras:
                             st.warning("❌ Nenhuma regra criada ainda!")
                         else:
                             st.write("### Teste das Regras:")
                             
+                            total_transacoes_afetadas = 0
+                            total_transacoes_ignoradas = 0
+                            
                             for regra in regras:
                                 st.write(f"**Regra:** '{regra['palavra_chave']}' → {regra['categoria']}")
                                 
                                 # Contar transações que batem com esta regra
                                 transacoes_encontradas = []
+                                transacoes_ignoradas = []
+                                
                                 for fatura in dados.get('faturas', []):
                                     for transacao in fatura.get('transacoes', []):
                                         desc = transacao['descricao'].lower().strip()
                                         palavra = regra['palavra_chave'].lower().strip()
+                                        
                                         if palavra in desc:
-                                            transacoes_encontradas.append({
-                                                'descricao': transacao['descricao'],
-                                                'categoria_atual': transacao.get('categoria', 'Não definida'),
-                                                'mes': fatura['mes'],
-                                                'ano': fatura['ano']
-                                            })
+                                            # Verificar se é classificação manual (será preservada)
+                                            if desc in classificacoes_manuais:
+                                                transacoes_ignoradas.append({
+                                                    'descricao': transacao['descricao'],
+                                                    'categoria_atual': transacao.get('categoria', 'Não definida'),
+                                                    'mes': fatura['mes'],
+                                                    'ano': fatura['ano']
+                                                })
+                                            else:
+                                                transacoes_encontradas.append({
+                                                    'descricao': transacao['descricao'],
+                                                    'categoria_atual': transacao.get('categoria', 'Não definida'),
+                                                    'mes': fatura['mes'],
+                                                    'ano': fatura['ano']
+                                                })
                                 
                                 if transacoes_encontradas:
-                                    st.success(f"✅ {len(transacoes_encontradas)} transações encontradas:")
-                                    for i, t in enumerate(transacoes_encontradas[:5]):  # Mostrar apenas as 5 primeiras
+                                    st.success(f"✅ {len(transacoes_encontradas)} transações serão afetadas:")
+                                    for i, t in enumerate(transacoes_encontradas[:3]):  # Mostrar apenas as 3 primeiras
                                         categoria_icon = "🔒" if t['categoria_atual'] == regra['categoria'] else "📝"
                                         st.write(f"  {categoria_icon} {t['descricao']} (atual: {t['categoria_atual']})")
-                                    if len(transacoes_encontradas) > 5:
-                                        st.write(f"  ... e mais {len(transacoes_encontradas) - 5} transações")
-                                else:
-                                    st.info(f"ℹ️ Nenhuma transação encontrada com '{regra['palavra_chave']}'")
+                                    if len(transacoes_encontradas) > 3:
+                                        st.write(f"  ... e mais {len(transacoes_encontradas) - 3} transações")
+                                    total_transacoes_afetadas += len(transacoes_encontradas)
+                                
+                                if transacoes_ignoradas:
+                                    st.info(f"🔒 {len(transacoes_ignoradas)} transações serão PRESERVADAS (classificação manual):")
+                                    for i, t in enumerate(transacoes_ignoradas[:2]):  # Mostrar apenas as 2 primeiras
+                                        st.write(f"  🔒 {t['descricao']} (manual: {t['categoria_atual']})")
+                                    if len(transacoes_ignoradas) > 2:
+                                        st.write(f"  ... e mais {len(transacoes_ignoradas) - 2} transações")
+                                    total_transacoes_ignoradas += len(transacoes_ignoradas)
+                                
+                                if not transacoes_encontradas and not transacoes_ignoradas:
+                                    st.warning(f"⚠️ Nenhuma transação encontrada com '{regra['palavra_chave']}'")
+                                    st.write("   💡 Verifique se a palavra-chave está escrita corretamente")
+                                
                                 st.write("")
+                            
+                            # Resumo final
+                            st.markdown("---")
+                            st.write("### Resumo do Teste:")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.metric("Transações que serão atualizadas", total_transacoes_afetadas)
+                            with col2:
+                                st.metric("Transações preservadas (manuais)", total_transacoes_ignoradas)
                 
                 # Botão para reaplicar regras
+                st.markdown("---")
+                st.write("### Reaplicar Regras")
+                st.info("🔒 **Importante:** Este botão preserva todas as classificações feitas manualmente (com o lápis). Apenas transações não editadas manualmente serão atualizadas.")
+                
                 if st.button("🔄 Reaplicar Regras a Todas as Transações", use_container_width=True):
                     with st.spinner("Reaplicando regras..."):
                         # Limpar cache para garantir que as regras mais recentes sejam carregadas
@@ -1636,6 +1631,9 @@ elif authentication_status:
                                             # Atualizar categoria na transação
                                             fatura_atual['transacoes'][idx]['categoria'] = nova_categoria
                                             
+                                            # IMPORTANTE: Salvar como classificação MANUAL (não será sobrescrita pelo botão reaplicar)
+                                            atualizar_classificacao_manual(transacao['descricao'], nova_categoria)
+                                            
                                             # Atualizar gastos fixos
                                             if is_fixo:
                                                 gasto_fixo = {
@@ -1663,7 +1661,7 @@ elif authentication_status:
                                             st.session_state[f'editing_{idx}'] = False
                                             # Manter a categoria aberta após salvar
                                             st.session_state.categoria_aberta = categoria
-                                            st.success("✓ Alterações salvas!")
+                                            st.success("✓ Alterações salvas como classificação manual!")
                                             st.rerun()
                                         except Exception as e:
                                             st.error(f"Erro ao salvar alterações: {str(e)}")
