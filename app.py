@@ -754,16 +754,8 @@ elif authentication_status:
         'Setembro': 9, 'Outubro': 10, 'Novembro': 11, 'Dezembro': 12
     }
     
-    # Criar opções com indicadores visuais
-    ano_atual = datetime.now().year
-    ano_selecionado_temp = st.session_state.get('ano_selecionado', ano_atual)
-    
-    mes_options = {}
-    for nome_mes, num_mes in mes_options_base.items():
-        if tem_dados_mes(num_mes, ano_selecionado_temp):
-            mes_options[f"✅ {nome_mes}"] = num_mes
-        else:
-            mes_options[f"⚪ {nome_mes}"] = num_mes
+    # Inicializar opções básicas de mês (serão atualizadas após seleção do ano)
+    mes_options = {nome: num for nome, num in mes_options_base.items()}
 
     # Funções de processamento
     @st.cache_data(ttl=600)
@@ -941,8 +933,6 @@ elif authentication_status:
             index=2,
             key="ano_selecionado"
         )
-        # Salvar ano selecionado no session state
-        st.session_state['ano_selecionado'] = ano_selecionado
     
     # Recriar opções do mês com base no ano selecionado
     mes_options = {}
