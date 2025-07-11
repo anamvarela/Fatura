@@ -528,20 +528,37 @@ def classificar_transacao(descricao):
             # Lojas de departamento
             'renner', 'cea', 'c&a', 'riachuelo', 'marisa', 'hering',
             'zara', 'forever 21', 'leader', 'h&m', 'uniqlo', 'gap',
-            # Lojas de esporte
+            # Lojas de esporte e streetwear
             'centauro', 'decathlon', 'netshoes', 'nike', 'adidas', 'puma',
-            'olympikus', 'mizuno', 'fila', 'under armour',
+            'olympikus', 'mizuno', 'fila', 'under armour', 'track field',
+            'garage', 'garage rio', 'osklen', 'farm', 'ellus', 'colcci',
+            # Calçados e acessórios
+            'arezzo', 'schutz', 'melissa', 'havaianas', 'grendha', 'ipanema',
+            'via marte', 'santa lolla', 'loucos e santos', 'carmen steffens',
+            'arezzo&co', 'anacapri', 'vizzano', 'beira rio', 'usaflex',
+            'sk acessorios', 'vivara', 'pandora', 'swarovski', 'rommanel',
+            'life', 'folheados', 'acessorios', 'joias', 'relogios', 'relógios',
+            # Moda feminina e masculina
+            'voah', 'amaro', 'dafiti', 'kanui', 'tricae', 'posthaus',
+            'youcom', 'linho fino', 'shoulder', 'animale', 'mixed',
+            'forum', 'cavalera', 'john john', 'damyller', 'richards',
+            'polo wear', 'dudalina', 'aramis', 'vr', 'individual',
             # E-commerce e marketplace
             'amazon', 'americanas', 'submarino', 'magalu', 'magazine luiza',
             'shopee', 'aliexpress', 'shein', 'mercado livre', 'mercadolivre',
-            'kabum', 'extra.com', 'casasbahia.com',
+            'kabum', 'extra.com', 'casasbahia.com', 'netshoes', 'dafiti',
             # Lojas físicas e departamento
             'casas bahia', 'ponto frio', 'fastshop', 'leroy merlin',
             'telhanorte', 'c&c', 'tok&stok', 'etna', 'camicado', 'mobly',
             'ricardo eletro', 'magazine', 'carrefour',
-            # Palavras genéricas de compras
-            'loja', 'shopping', 'compras', 'eletronicos', 'eletrônicos',
-            'livraria', 'livro', 'papelaria', 'material', 'casa', 'decoracao', 'decoração'
+            # Moda íntima e praia
+            'hope', 'lupo', 'trifil', 'demillus', 'duloren', 'cia maritima',
+            'salinas', 'lenny niemeyer', 'blue man', 'agua de coco',
+            # Palavras genéricas de moda
+            'loja', 'shopping', 'moda', 'vestuario', 'vestuário', 'boutique',
+            'fashion', 'wear', 'brand', 'store', 'outlet', 'multimarcas',
+            'roupas', 'calcados', 'calçados', 'sapatos', 'tenis', 'tênis',
+            'bolsas', 'carteiras', 'cintos', 'bijuterias', 'semijoias'
         ]
     }
 
