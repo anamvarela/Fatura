@@ -451,7 +451,7 @@ def classificar_transacao(descricao):
         if any(palavra in descricao for palavra in palavras_chave):
             return categoria
 
-    return "Outros"
+    return "Roupas"
 
 def adicionar_fatura(fatura):
     """Adiciona uma nova fatura ao histórico"""
@@ -896,8 +896,77 @@ elif authentication_status:
             st.error(f"Erro ao processar o PDF: {str(e)}")
             return None
 
-    # Usar a função global classificar_transacao (já definida acima)
-    # Removida a função local duplicada que estava causando inconsistências
+    # Função para classificar transações
+    def classificar_transacao(descricao):
+        descricao = descricao.lower()
+        
+        # Verificar se contém "estorno" ou "desconto" - isso é tratado na função adicionar_fatura()
+        # Não classificamos aqui, apenas retornamos categoria normal
+        
+        # Verificar se é Zig* (entretenimento)
+        if descricao.startswith('zig'):
+            return 'Entretenimento'
+        
+        # VERIFICAÇÃO ESPECIAL PARA 99APP - MÁXIMA PRIORIDADE
+        if '99app' in descricao or ('99' in descricao and 'app' in descricao) or '99 app' in descricao:
+            return "Transporte"
+        
+        # VERIFICAÇÕES ESPECIAIS PARA ROUPAS (antes de verificar mercado)
+        if 'mercado livre' in descricao or 'mercadolivre' in descricao:
+            return "Roupas"
+        
+        # APLICAR REGRAS DO USUÁRIO (antes das regras automáticas)
+        categoria_regra = aplicar_regras_classificacao(descricao)
+        if categoria_regra:
+            return categoria_regra
+        
+        # Alimentação
+        if any(palavra in descricao for palavra in [
+            'ifood', 'rappi', 'uber eats', 'restaurante', 'padaria', 'mercado',
+            'supermercado', 'hortifruti', 'açougue', 'acougue', 'cafeteria',
+            'cafe', 'café', 'bar', 'lanchonete', 'food', 'burger',
+            # Restaurantes específicos
+            'bendita chica', 'bendita', 'chica', 'amen gavea', 'amen',
+            'art food', 'abbraccio', 'braseiro', 'gavea', 'nama',
+            'nanquim', 'posi mozza', 'posi', 'mozza', 'smoov', 'sucos',
+            'katzsu', 'eleninha', 'buddario', 'dri', 'jobi', 'scarpi',
+            'tintin', 'choperiakaraoke', 'chopp', 'alemao', 'tabacaria',
+            'woods wine', 'woods', 'wine', 'reserva 11', 'beach club',
+            'zig', 'caza', 'lagoa', 'sheesh', 'downtown', 'galeto',
+            'rainha', 'leblon', 'natural delli', 'buffet', 'absurda',
+            'confeitaria', 'zona sul'
+        ]):
+            return "Alimentação"
+        
+        # Transporte
+        if any(palavra in descricao for palavra in [
+            'uber', '99 pop', '99pop', 'taxi', 'táxi', 'combustivel', 'combustível',
+            'estacionamento', 'metro', 'metrô', 'onibus', 'ônibus', 'bilhete',
+            'posto', 'gasolina', 'etanol', 'alcool', 'álcool', 'uber*', 'uber x'
+        ]):
+            return "Transporte"
+        
+        # Entretenimento
+        if any(palavra in descricao for palavra in [
+            'netflix', 'spotify', 'cinema', 'teatro', 'show', 'ingresso',
+            'prime video', 'disney+', 'hbo', 'jogos', 'game', 'playstation',
+            'xbox', 'steam', 'livraria', 'livro', 'música', 'musica',
+            'streaming', 'assinatura'
+        ]):
+            return "Entretenimento"
+        
+        # Self Care
+        if any(palavra in descricao for palavra in [
+            'academia', 'farmacia', 'farmácia', 'drogaria', 'medico', 'médico',
+            'dentista', 'psicólogo', 'psicologo', 'terapia', 'spa', 'massagem',
+            'salao', 'salão', 'cabelereiro', 'manicure', 'pedicure', 'pilates',
+            'yoga', 'crossfit', 'gym', 'consulta', 'exame', 'clinica', 'clínica',
+            'hospital', 'remedio', 'remédio'
+        ]):
+            return "Self Care"
+        
+        # Roupas (incluindo o que antes era "Outros")
+        return "Roupas"
 
     # Função auxiliar para formatar valores
     def formatar_valor(valor):
