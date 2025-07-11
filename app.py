@@ -460,18 +460,6 @@ def classificar_transacao(descricao):
             # Estabelecimentos que estavam sendo classificados incorretamente
             'vmpp comercio', 'confeccao', 'confecção', 'confec', 'vuvu',
             'ec *', 'produtos', 'e-commerce', 'ecommerce'
-        ],
-        'Outros': [
-            # Serviços profissionais
-            'aluguel', 'condominio', 'condomínio', 'iptu', 'conta de luz',
-            'conta de agua', 'conta de água', 'conta de gas', 'conta de gás',
-            'telefone', 'internet', 'tv', 'cable', 'seguro', 'banco',
-            'taxa', 'tarifa', 'juros', 'multa', 'advocacia', 'advogado',
-            'contabilidade', 'contador', 'consultoria', 'servicos', 'serviços',
-            # Tecnologia específica
-            'we make agency', 'agency', 'agencia', 'agência',
-            # Palavras genéricas que não se encaixam em outras categorias
-            'diversos', 'outros', 'geral', 'variados', 'miscelanea', 'miscelânea'
         ]
     }
 
@@ -536,7 +524,7 @@ def adicionar_gasto_fixo_novo(transacao):
     gasto = {
         'descricao': transacao['descricao'],
         'valor': transacao['valor'],
-        'categoria': transacao.get('categoria', 'Outros'),
+        'categoria': transacao.get('categoria', 'Roupas'),
         'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
     adicionar_gasto_fixo(gasto)
@@ -599,7 +587,7 @@ def corrigir_classificacoes_restaurantes():
             
             # Verifica se é um restaurante e se está classificado incorretamente
             if any(rest in descricao for rest in restaurantes_conhecidos):
-                if categoria_atual in ['Roupas', 'Outros']:
+                if categoria_atual == 'Roupas':
                     transacao['categoria'] = 'Alimentação'
                     corrigidas += 1
                     print(f"Corrigindo classificação de '{transacao['descricao']}' para Alimentação")
@@ -943,7 +931,7 @@ elif authentication_status:
         gasto = {
             'descricao': transacao['descricao'],
             'valor': transacao['valor'],
-            'categoria': transacao.get('categoria', 'Outros'),
+            'categoria': transacao.get('categoria', 'Roupas'),
             'data_adicao': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         adicionar_gasto_fixo(gasto)
@@ -1162,7 +1150,7 @@ elif authentication_status:
             with col3:
                 tipo_entrada = st.selectbox(
                     "Tipo",
-                    options=["Salário", "Freelance", "Outros"]
+                                            options=["Salário", "Freelance"]
                 )
             
             with col4:
@@ -1189,7 +1177,7 @@ elif authentication_status:
             df_entradas = pd.DataFrame([{
                 'Valor': formatar_valor(entrada['valor']),
                 'Descrição': entrada['descricao'],
-                'Tipo': entrada.get('tipo', 'Outros'),
+                'Tipo': entrada.get('tipo', 'Salário'),
                 'Ações': f"del_entrada_{idx}"
             } for idx, entrada in enumerate(entradas_existentes)])
             
@@ -1202,7 +1190,7 @@ elif authentication_status:
                 with col2:
                     st.write(entrada['descricao'])
                 with col3:
-                    st.write(entrada.get('tipo', 'Outros'))
+                    st.write(entrada.get('tipo', 'Salário'))
                 with col4:
                     if st.button("🗑️", key=f"del_entrada_{idx}", help="Deletar entrada"):
                         remover_entrada(
@@ -1210,7 +1198,7 @@ elif authentication_status:
                             entrada['ano'],
                             entrada['valor'],
                             entrada['descricao'],
-                            entrada.get('tipo', 'Outros')
+                            entrada.get('tipo', 'Salário')
                         )
                         # Manter a seleção do mês atual
                         nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
@@ -1851,7 +1839,7 @@ elif authentication_status:
             with col3:
                 categoria = st.selectbox(
                     "Categoria",
-                                                options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Roupas", "Outros"]
+                                                options=["Alimentação", "Transporte", "Entretenimento", "Self Care", "Roupas"]
                 )
             
             with col4:
