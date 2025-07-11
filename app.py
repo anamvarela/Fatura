@@ -1252,44 +1252,44 @@ elif authentication_status:
                     
                     with col3:
                         st.write("")  # Espaço para alinhamento
-                                                                if st.form_submit_button("Adicionar Regra"):
-                                            if palavra_chave and categoria_regra:
-                                                if adicionar_regra_classificacao(palavra_chave, categoria_regra):
-                                                    st.success(f"✓ Regra criada: '{palavra_chave}' → {categoria_regra}")
-                                                    
-                                                    # Aplicar a regra imediatamente às transações existentes
-                                                    with st.spinner("Aplicando regra às transações existentes..."):
-                                                        resultado = reaplicar_regras_todas_transacoes()
-                                                        if resultado['atualizadas'] > 0:
-                                                            st.success(f"✓ Regra aplicada a {resultado['atualizadas']} transações!")
-                                                            
-                                                            # Mostrar exemplos de transações afetadas
-                                                            dados = carregar_dados()
-                                                            exemplos = []
-                                                            for fatura in dados.get('faturas', []):
-                                                                for transacao in fatura.get('transacoes', []):
-                                                                    if palavra_chave.lower() in transacao['descricao'].lower():
-                                                                        exemplos.append(transacao['descricao'])
-                                                                        if len(exemplos) >= 3:  # Mostrar até 3 exemplos
-                                                                            break
-                                                                if len(exemplos) >= 3:
-                                                                    break
-                                                            
-                                                            if exemplos:
-                                                                st.info(f"📋 Exemplos de transações afetadas: {', '.join(exemplos[:3])}")
-                                                        else:
-                                                            st.info("ℹ️ Nenhuma transação existente foi afetada por esta regra")
-                                                    
-                                                    # Manter a seleção do mês atual
-                                                    nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
-                                                    st.session_state['mes_manter_selecao'] = nome_mes_limpo
-                                                    
-                                                    time.sleep(0.5)
-                                                    st.rerun()
+                        if st.form_submit_button("Adicionar Regra"):
+                            if palavra_chave and categoria_regra:
+                                if adicionar_regra_classificacao(palavra_chave, categoria_regra):
+                                    st.success(f"✓ Regra criada: '{palavra_chave}' → {categoria_regra}")
+                                    
+                                    # Aplicar a regra imediatamente às transações existentes
+                                    with st.spinner("Aplicando regra às transações existentes..."):
+                                        resultado = reaplicar_regras_todas_transacoes()
+                                        if resultado['atualizadas'] > 0:
+                                            st.success(f"✓ Regra aplicada a {resultado['atualizadas']} transações!")
+                                            
+                                            # Mostrar exemplos de transações afetadas
+                                            dados = carregar_dados()
+                                            exemplos = []
+                                            for fatura in dados.get('faturas', []):
+                                                for transacao in fatura.get('transacoes', []):
+                                                    if palavra_chave.lower() in transacao['descricao'].lower():
+                                                        exemplos.append(transacao['descricao'])
+                                                        if len(exemplos) >= 3:  # Mostrar até 3 exemplos
+                                                            break
+                                                    if len(exemplos) >= 3:
+                                                        break
+                                                
+                                                if exemplos:
+                                                    st.info(f"📋 Exemplos de transações afetadas: {', '.join(exemplos[:3])}")
                                                 else:
-                                                    st.error("Erro ao criar regra!")
-                                            else:
-                                                st.error("Por favor, preencha todos os campos!")
+                                                    st.info("ℹ️ Nenhuma transação existente foi afetada por esta regra")
+                                    
+                                    # Manter a seleção do mês atual
+                                    nome_mes_limpo = mes_selecionado.replace('✅ ', '').replace('⚪ ', '')
+                                    st.session_state['mes_manter_selecao'] = nome_mes_limpo
+                                    
+                                    time.sleep(0.5)
+                                    st.rerun()
+                                else:
+                                    st.error("Erro ao criar regra!")
+                            else:
+                                st.error("Por favor, preencha todos os campos!")
                 
                 st.markdown("---")
                 st.write("**Exemplo de uso:**")
